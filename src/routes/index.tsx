@@ -56,7 +56,7 @@ function Index() {
 
       {/* HERO */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-10 px-6 py-16 lg:grid-cols-2 lg:py-24">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-10 pt-4 lg:grid-cols-2 lg:pb-16 lg:pt-6">
           {/* LEFT */}
           <div className="max-w-xl">
             <motion.h1
@@ -71,7 +71,7 @@ function Index() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 text-[15px] leading-relaxed text-[#42526e]"
+              className="mt-5 text-[15px] leading-relaxed text-[#42526e]"
             >
               Trelo is the Slack agent that remembers what your team said
               turning past threads into instant answers and commitments into
@@ -82,7 +82,7 @@ function Index() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-8 flex max-w-md gap-2"
+              className="mt-6 flex max-w-md gap-2"
             >
               <input
                 type="email"
@@ -93,10 +93,25 @@ function Index() {
                 type="submit"
                 className="whitespace-nowrap rounded-md bg-black px-5 py-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800"
               >
-                Add to Slack — free
+                Sign up — it's free
               </button>
             </motion.form>
+
+            <motion.button
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.45 }}
+              type="button"
+              className="mt-4 inline-flex items-center gap-3 rounded-md border border-[#dfe1e6] bg-white px-5 py-3 text-[15px] font-semibold text-black shadow-sm transition hover:bg-[#f4f5f7]"
+            >
+              <SlackLogo small />
+              Continue with Slack
+            </motion.button>
+            <p className="mt-3 text-[13px] text-[#6b778c]">
+              Sign in or create your Trelo account with your Slack workspace.
+            </p>
           </div>
+
 
           {/* RIGHT — cinematic hand+phone stage */}
           <HeroStage />
@@ -108,7 +123,7 @@ function Index() {
 
 function HeroStage() {
   return (
-    <div className="relative flex min-h-[640px] items-center justify-center overflow-visible">
+    <div className="relative flex min-h-[560px] items-center justify-center overflow-visible">
       {/* soft radial spotlight */}
       <motion.div
         initial={{ opacity: 0, scale: 0.6 }}
@@ -157,14 +172,14 @@ function HeroStage() {
         className="absolute bottom-0 left-36 h-44 w-44 bg-[#8777d9] sm:left-56"
       />
 
-      {/* Curved arrow pointing to phone */}
+      {/* Curved arrow pointing to phone — kept above phone card */}
       <svg
         viewBox="0 0 300 240"
-        className="pointer-events-none absolute -top-2 right-6 h-40 w-52 text-black"
+        className="pointer-events-none absolute -top-4 right-0 z-40 h-48 w-60 text-black sm:-right-4 sm:h-56 sm:w-72"
         fill="none"
       >
         <motion.path
-          d="M20 40 C 90 10, 200 20, 250 130"
+          d="M30 30 C 120 0, 240 20, 270 160"
           stroke="currentColor"
           strokeWidth="2.5"
           strokeLinecap="round"
@@ -173,7 +188,7 @@ function HeroStage() {
           transition={{ duration: 1.4, delay: 0.9, ease: "easeInOut" }}
         />
         <motion.path
-          d="M235 118 L252 132 L238 148"
+          d="M255 148 L272 162 L258 180"
           stroke="currentColor"
           strokeWidth="2.5"
           strokeLinecap="round"
@@ -183,6 +198,7 @@ function HeroStage() {
           transition={{ duration: 0.4, delay: 2.2 }}
         />
       </svg>
+
 
       {/* Hand + phone */}
       <motion.div
@@ -310,9 +326,10 @@ function FloatingIcon({
   );
 }
 
-function SlackLogo() {
+function SlackLogo({ small = false }: { small?: boolean }) {
+  const size = small ? "h-5 w-5" : "h-14 w-14 sm:h-16 sm:w-16";
   return (
-    <svg viewBox="0 0 60 60" className="h-14 w-14 sm:h-16 sm:w-16" aria-hidden>
+    <svg viewBox="0 0 60 60" className={size} aria-hidden>
       <path fill="#E01E5A" d="M16 37a4 4 0 1 1-4-4h4v4zm2 0a4 4 0 1 1 8 0v10a4 4 0 1 1-8 0V37z" />
       <path fill="#36C5F0" d="M22 16a4 4 0 1 1 4-4v4h-4zm0 2a4 4 0 1 1 0 8H12a4 4 0 1 1 0-8h10z" />
       <path fill="#2EB67D" d="M43 22a4 4 0 1 1 4 4h-4v-4zm-2 0a4 4 0 1 1-8 0V12a4 4 0 1 1 8 0v10z" />
@@ -320,3 +337,4 @@ function SlackLogo() {
     </svg>
   );
 }
+
