@@ -27,7 +27,8 @@ function Index() {
     <div className="min-h-screen bg-white">
       {/* NAV */}
       <header className="w-full bg-white">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3">
+
           <div className="flex items-center gap-10">
             <a href="/" className="flex items-center gap-2">
               <div className="grid h-7 w-7 place-items-center rounded-md bg-black">
@@ -43,12 +44,13 @@ function Index() {
               </button>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button className="text-[15px] font-medium text-black hover:opacity-70">
               Log in
             </button>
-            <button className="rounded-md bg-black px-5 py-2.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800">
-              Create account
+            <button className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800">
+              <SlackLogo small />
+              Continue with Slack
             </button>
           </div>
         </div>
@@ -56,7 +58,7 @@ function Index() {
 
       {/* HERO */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-10 pt-4 lg:grid-cols-2 lg:pb-16 lg:pt-6">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-10 pt-0 lg:grid-cols-2 lg:pb-16 lg:pt-0">
           {/* LEFT */}
           <div className="max-w-xl">
             <motion.h1
@@ -158,19 +160,20 @@ function HeroStage() {
         className="pointer-events-none absolute h-[540px] w-[540px] rounded-full border border-dashed border-[#ebecf0]"
       />
 
-      {/* decorative shapes behind phone */}
+      {/* decorative shapes — visible behind and around the phone */}
       <motion.div
-        initial={{ opacity: 0, y: 60, rotate: 0 }}
-        animate={{ opacity: 1, y: 0, rotate: 14 }}
+        initial={{ opacity: 0, y: 40, rotate: 0 }}
+        animate={{ opacity: 1, y: 0, rotate: 12 }}
         transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute bottom-6 left-6 h-40 w-40 bg-[#ff8b00] sm:left-16"
+        className="absolute -top-2 right-4 z-0 h-48 w-48 bg-[#ff8b00] sm:right-10 sm:h-56 sm:w-56"
       />
       <motion.div
-        initial={{ opacity: 0, y: 60, rotate: 0 }}
-        animate={{ opacity: 1, y: 0, rotate: -8 }}
+        initial={{ opacity: 0, y: 40, rotate: 0 }}
+        animate={{ opacity: 1, y: 0, rotate: -10 }}
         transition={{ duration: 1, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute bottom-0 left-36 h-44 w-44 bg-[#8777d9] sm:left-56"
+        className="absolute -bottom-2 left-2 z-0 h-52 w-52 bg-[#8777d9] sm:left-10 sm:h-64 sm:w-64"
       />
+
 
       {/* Curved arrow pointing to phone — kept above phone card */}
       <svg
@@ -217,7 +220,7 @@ function HeroStage() {
             alt="Hand holding a phone showing the Trelo Slack agent"
             width={480}
             height={640}
-            className="relative z-10 w-[320px] sm:w-[420px] drop-shadow-2xl"
+            className="relative z-10 w-[300px] mix-blend-multiply sm:w-[380px]"
           />
 
           {/* Slack logo on screen */}
