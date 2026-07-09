@@ -56,7 +56,7 @@ function Index() {
 
       {/* HERO */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-10 px-6 py-16 lg:grid-cols-2 lg:py-24">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-10 pt-4 lg:grid-cols-2 lg:pb-16 lg:pt-6">
           {/* LEFT */}
           <div className="max-w-xl">
             <motion.h1
@@ -71,7 +71,7 @@ function Index() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 text-[15px] leading-relaxed text-[#42526e]"
+              className="mt-5 text-[15px] leading-relaxed text-[#42526e]"
             >
               Trelo is the Slack agent that remembers what your team said
               turning past threads into instant answers and commitments into
@@ -82,7 +82,7 @@ function Index() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-8 flex max-w-md gap-2"
+              className="mt-6 flex max-w-md gap-2"
             >
               <input
                 type="email"
@@ -93,10 +93,25 @@ function Index() {
                 type="submit"
                 className="whitespace-nowrap rounded-md bg-black px-5 py-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800"
               >
-                Add to Slack — free
+                Sign up — it's free
               </button>
             </motion.form>
+
+            <motion.button
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.45 }}
+              type="button"
+              className="mt-4 inline-flex items-center gap-3 rounded-md border border-[#dfe1e6] bg-white px-5 py-3 text-[15px] font-semibold text-black shadow-sm transition hover:bg-[#f4f5f7]"
+            >
+              <SlackLogo small />
+              Continue with Slack
+            </motion.button>
+            <p className="mt-3 text-[13px] text-[#6b778c]">
+              Sign in or create your Trelo account with your Slack workspace.
+            </p>
           </div>
+
 
           {/* RIGHT — cinematic hand+phone stage */}
           <HeroStage />
