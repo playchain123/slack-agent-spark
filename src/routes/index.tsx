@@ -119,7 +119,342 @@ function Index() {
           <HeroStage />
         </div>
       </section>
+
+      <LogosSection />
+      <FeaturesSection />
+      <HowItWorks />
+      <IntegrationsSection />
+      <TestimonialsSection />
+      <CTASection />
+      <Footer />
     </div>
+  );
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0 },
+};
+
+function AnimatedText({
+  as: Tag = "p",
+  children,
+  className = "",
+  delay = 0,
+}: {
+  as?: any;
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
+  const MotionTag = motion(Tag as any);
+  return (
+    <MotionTag
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.4 }}
+      variants={fadeUp}
+      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={className}
+    >
+      {children}
+    </MotionTag>
+  );
+}
+
+function LogosSection() {
+  const logos = ["Linear", "Notion", "Vercel", "Ramp", "Figma", "Loom"];
+  return (
+    <section className="border-y border-[#ebecf0] bg-white py-10">
+      <div className="mx-auto max-w-[1400px] px-6">
+        <AnimatedText className="text-center text-[13px] font-semibold uppercase tracking-[0.18em] text-[#6b778c]">
+          Trusted by fast-moving teams that live in Slack
+        </AnimatedText>
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          transition={{ staggerChildren: 0.08, delayChildren: 0.2 }}
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4"
+        >
+          {logos.map((l) => (
+            <motion.span
+              key={l}
+              variants={fadeUp}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="text-2xl font-black tracking-tight text-[#42526e] opacity-70"
+            >
+              {l}
+            </motion.span>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function FeaturesSection() {
+  const features = [
+    {
+      tag: "MEMORY",
+      title: "Instant answers from past threads",
+      desc: "Ask Trelo anything — it searches every channel and DM your team allowed, then replies inline with the exact message and link.",
+      accent: "#0052cc",
+    },
+    {
+      tag: "FOLLOW-THROUGH",
+      title: "Commitments become tracked tasks",
+      desc: "When someone says 'I'll ship it Friday,' Trelo captures it with owner and due date, then nudges before it slips.",
+      accent: "#ff8b00",
+    },
+    {
+      tag: "DIGESTS",
+      title: "Daily summaries that respect your time",
+      desc: "Wake up to a five-line briefing of what happened, what needs your input, and what's overdue — no scrolling required.",
+      accent: "#8777d9",
+    },
+  ];
+  return (
+    <section className="bg-white py-24">
+      <div className="mx-auto max-w-[1400px] px-6">
+        <AnimatedText className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#0052cc]">
+          Why teams choose Trelo
+        </AnimatedText>
+        <AnimatedText
+          as="h2"
+          delay={0.1}
+          className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.1] text-black sm:text-5xl"
+        >
+          Slack is where work happens. Trelo makes sure nothing gets lost.
+        </AnimatedText>
+        <AnimatedText
+          delay={0.2}
+          className="mt-5 max-w-2xl text-[15px] leading-relaxed text-[#42526e]"
+        >
+          Three features, one goal: turn the messy river of Slack into a system your team can actually rely on.
+        </AnimatedText>
+
+        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {features.map((f, i) => (
+            <motion.div
+              key={f.title}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -6 }}
+              className="group rounded-2xl border border-[#dfe1e6] bg-white p-8 shadow-sm transition hover:shadow-xl"
+            >
+              <div className="h-10 w-10 rounded-lg" style={{ backgroundColor: f.accent }} />
+              <div className="mt-6 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6b778c]">
+                {f.tag}
+              </div>
+              <h3 className="mt-2 text-xl font-semibold text-black">{f.title}</h3>
+              <p className="mt-3 text-[14px] leading-relaxed text-[#42526e]">{f.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorks() {
+  const steps = [
+    { n: "01", title: "Connect your Slack workspace", desc: "One click. Trelo installs as a Slack app and respects every channel permission your admins set." },
+    { n: "02", title: "Trelo listens and learns", desc: "It indexes threads you have access to and quietly builds a private memory of decisions and commitments." },
+    { n: "03", title: "Ask, act, and ship", desc: "Search past answers, auto-create tasks from messages, and get reminded before anything falls through." },
+  ];
+  return (
+    <section className="bg-[#f7f8fa] py-24">
+      <div className="mx-auto max-w-[1400px] px-6">
+        <AnimatedText className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#0052cc]">
+          How it works
+        </AnimatedText>
+        <AnimatedText
+          as="h2"
+          delay={0.1}
+          className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.1] text-black sm:text-5xl"
+        >
+          Set up in 60 seconds. Value from day one.
+        </AnimatedText>
+
+        <div className="mt-14 grid grid-cols-1 gap-8 md:grid-cols-3">
+          {steps.map((s, i) => (
+            <motion.div
+              key={s.n}
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, delay: i * 0.15, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="text-5xl font-black text-[#dfe1e6]">{s.n}</div>
+              <h3 className="mt-3 text-xl font-semibold text-black">{s.title}</h3>
+              <p className="mt-3 text-[14px] leading-relaxed text-[#42526e]">{s.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function IntegrationsSection() {
+  const items = ["Slack", "Notion", "Linear", "Jira", "GitHub", "Google Drive", "Zoom", "Gmail"];
+  return (
+    <section className="bg-white py-24">
+      <div className="mx-auto max-w-[1400px] px-6 text-center">
+        <AnimatedText className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#0052cc]">
+          Integrations
+        </AnimatedText>
+        <AnimatedText
+          as="h2"
+          delay={0.1}
+          className="mx-auto mt-4 max-w-3xl text-4xl font-semibold leading-[1.1] text-black sm:text-5xl"
+        >
+          Plays nicely with the tools your team already loves.
+        </AnimatedText>
+
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          transition={{ staggerChildren: 0.06 }}
+          className="mx-auto mt-12 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4"
+        >
+          {items.map((i) => (
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -4, scale: 1.03 }}
+              className="rounded-xl border border-[#dfe1e6] bg-white px-4 py-6 text-[15px] font-semibold text-black shadow-sm"
+            >
+              {i}
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function TestimonialsSection() {
+  const quotes = [
+    { q: "Trelo answered a policy question in seconds that used to take three people and a two-day thread hunt.", a: "Maya Chen", r: "Head of Ops, Ravel" },
+    { q: "We stopped losing action items overnight. Literally overnight. The daily digest is our new stand-up.", a: "Diego Alvarez", r: "Engineering Lead, Northlab" },
+    { q: "It feels like the smartest teammate we ever hired — and it works entirely inside Slack.", a: "Priya Rao", r: "COO, Fieldnote" },
+  ];
+  return (
+    <section className="bg-[#0b0d12] py-24 text-white">
+      <div className="mx-auto max-w-[1400px] px-6">
+        <AnimatedText className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#5cbdff]">
+          Loved by teams
+        </AnimatedText>
+        <AnimatedText
+          as="h2"
+          delay={0.1}
+          className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.1] sm:text-5xl"
+        >
+          Less repeating. Fewer dropped balls. Faster decisions.
+        </AnimatedText>
+
+        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {quotes.map((t, i) => (
+            <motion.figure
+              key={t.a}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+              className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur"
+            >
+              <blockquote className="text-[16px] leading-relaxed text-white/90">"{t.q}"</blockquote>
+              <figcaption className="mt-6">
+                <div className="text-[14px] font-semibold">{t.a}</div>
+                <div className="text-[13px] text-white/60">{t.r}</div>
+              </figcaption>
+            </motion.figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CTASection() {
+  return (
+    <section className="bg-white py-24">
+      <div className="mx-auto max-w-[1100px] px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="relative overflow-hidden rounded-3xl bg-black px-8 py-16 text-center text-white sm:px-16 sm:py-20"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+            className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#8777d9] opacity-30 blur-3xl"
+          />
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+            className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-[#ff8b00] opacity-30 blur-3xl"
+          />
+          <AnimatedText
+            as="h2"
+            className="relative text-4xl font-semibold leading-[1.1] sm:text-5xl"
+          >
+            Give your team a memory that never forgets.
+          </AnimatedText>
+          <AnimatedText
+            delay={0.15}
+            className="relative mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-white/70"
+          >
+            Free for the first 30 days. No credit card. Installs in Slack in under a minute.
+          </AnimatedText>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="relative mt-8 flex flex-wrap items-center justify-center gap-3"
+          >
+            <button className="inline-flex items-center gap-2 rounded-md bg-white px-5 py-3 text-[15px] font-semibold text-black transition hover:bg-white/90">
+              <SlackLogo small />
+              Continue with Slack
+            </button>
+            <button className="rounded-md border border-white/20 px-5 py-3 text-[15px] font-semibold text-white transition hover:bg-white/10">
+              Book a demo
+            </button>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-[#ebecf0] bg-white py-12">
+      <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 px-6 text-[13px] text-[#6b778c] sm:flex-row">
+        <div className="flex items-center gap-2">
+          <div className="grid h-6 w-6 place-items-center rounded-md bg-black">
+            <span className="text-xs font-black text-white">T</span>
+          </div>
+          <span className="font-black tracking-tight text-black">trelo</span>
+          <span className="ml-2">© 2026 Trelo Labs, Inc.</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <a href="#" className="hover:text-black">Privacy</a>
+          <a href="#" className="hover:text-black">Terms</a>
+          <a href="#" className="hover:text-black">Security</a>
+          <a href="#" className="hover:text-black">Contact</a>
+        </div>
+      </div>
+    </footer>
   );
 }
 
