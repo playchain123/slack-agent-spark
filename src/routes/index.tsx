@@ -326,9 +326,10 @@ function FloatingIcon({
   );
 }
 
-function SlackLogo() {
+function SlackLogo({ small = false }: { small?: boolean }) {
+  const size = small ? "h-5 w-5" : "h-14 w-14 sm:h-16 sm:w-16";
   return (
-    <svg viewBox="0 0 60 60" className="h-14 w-14 sm:h-16 sm:w-16" aria-hidden>
+    <svg viewBox="0 0 60 60" className={size} aria-hidden>
       <path fill="#E01E5A" d="M16 37a4 4 0 1 1-4-4h4v4zm2 0a4 4 0 1 1 8 0v10a4 4 0 1 1-8 0V37z" />
       <path fill="#36C5F0" d="M22 16a4 4 0 1 1 4-4v4h-4zm0 2a4 4 0 1 1 0 8H12a4 4 0 1 1 0-8h10z" />
       <path fill="#2EB67D" d="M43 22a4 4 0 1 1 4 4h-4v-4zm-2 0a4 4 0 1 1-8 0V12a4 4 0 1 1 8 0v10z" />
@@ -336,3 +337,4 @@ function SlackLogo() {
     </svg>
   );
 }
+
