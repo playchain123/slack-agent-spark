@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Play } from "lucide-react";
+import { motion } from "framer-motion";
+import handPhone from "@/assets/hand-phone.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,31 +30,25 @@ function Index() {
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5">
           <div className="flex items-center gap-10">
             <a href="/" className="flex items-center gap-2">
-              <div className="grid h-7 w-7 place-items-center rounded-md bg-[#0052cc]">
+              <div className="grid h-7 w-7 place-items-center rounded-md bg-black">
                 <span className="text-sm font-black text-white">T</span>
               </div>
-              <span className="text-xl font-black tracking-tight text-[#172b4d]">
+              <span className="text-xl font-black tracking-tight text-black">
                 trelo
               </span>
             </a>
             <nav className="hidden items-center gap-7 md:flex">
-              {["Features", "Solutions", "Plans", "Pricing", "Resources"].map((l) => (
-                <button
-                  key={l}
-                  className="flex items-center gap-1 text-[15px] font-medium text-[#172b4d] hover:text-[#0052cc]"
-                >
-                  {l}
-                  {l !== "Pricing" && <span className="text-xs">▾</span>}
-                </button>
-              ))}
+              <button className="text-[15px] font-medium text-black hover:opacity-70">
+                Pricing
+              </button>
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <button className="text-[15px] font-medium text-[#172b4d] hover:text-[#0052cc]">
+            <button className="text-[15px] font-medium text-black hover:opacity-70">
               Log in
             </button>
-            <button className="rounded-md bg-[#0052cc] px-5 py-2.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#0747a6]">
-              Get Trelo for free
+            <button className="rounded-md bg-black px-5 py-2.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800">
+              Create account
             </button>
           </div>
         </div>
@@ -64,100 +59,97 @@ function Index() {
         <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-10 px-6 py-16 lg:grid-cols-2 lg:py-24">
           {/* LEFT */}
           <div className="max-w-xl">
-            <h1 className="text-5xl font-black leading-[1.05] tracking-tight text-[#172b4d] lg:text-6xl">
+            <h1 className="text-3xl font-semibold leading-[1.2] text-black sm:text-4xl">
               Capture every decision, surface every answer.
             </h1>
             <p className="mt-6 text-lg text-[#42526e]">
-              Trelo is the Slack agent that remembers what your team said — turning
-              past threads into instant answers and commitments into tracked tasks.
+              Trelo is the Slack agent that remembers what your team said —
+              turning past threads into instant answers and commitments into
+              tracked tasks.
             </p>
 
             <form className="mt-8 flex max-w-md gap-2">
               <input
                 type="email"
                 placeholder="Work email"
-                className="flex-1 rounded-md border border-[#dfe1e6] bg-white px-4 py-3 text-[15px] text-[#172b4d] outline-none focus:border-[#0052cc]"
+                className="flex-1 rounded-md border border-[#dfe1e6] bg-white px-4 py-3 text-[15px] text-black outline-none focus:border-black"
               />
               <button
                 type="submit"
-                className="whitespace-nowrap rounded-md bg-[#0052cc] px-5 py-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#0747a6]"
+                className="whitespace-nowrap rounded-md bg-black px-5 py-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800"
               >
                 Add to Slack — free
               </button>
             </form>
-
-            <p className="mt-5 max-w-md text-sm text-[#42526e]">
-              By adding Trelo, you acknowledge the{" "}
-              <a href="#" className="text-[#0052cc] underline">
-                Trelo Privacy Policy
-              </a>
-              .
-            </p>
-
-            <button className="mt-6 flex items-center gap-2 text-[15px] font-semibold text-[#0052cc]">
-              Watch video
-              <span className="grid h-6 w-6 place-items-center rounded-full bg-[#0052cc] text-white">
-                <Play className="h-3 w-3 fill-white" />
-              </span>
-            </button>
           </div>
 
-          {/* RIGHT — phone mockup */}
-          <div className="relative flex items-center justify-center">
+          {/* RIGHT — hand-holding-phone mockup with animation */}
+          <div className="relative flex min-h-[560px] items-center justify-center">
             {/* decorative shapes */}
-            <div className="absolute bottom-4 left-8 h-40 w-40 rotate-12 bg-[#ff8b00]" />
-            <div className="absolute bottom-0 left-40 h-44 w-44 -rotate-6 bg-[#8777d9]" />
+            <motion.div
+              initial={{ opacity: 0, y: 40, rotate: 0 }}
+              animate={{ opacity: 1, y: 0, rotate: 12 }}
+              transition={{ duration: 0.9, delay: 0.3, ease: "easeOut" }}
+              className="absolute bottom-8 left-4 h-40 w-40 bg-[#ff8b00] sm:left-16"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 40, rotate: 0 }}
+              animate={{ opacity: 1, y: 0, rotate: -6 }}
+              transition={{ duration: 0.9, delay: 0.5, ease: "easeOut" }}
+              className="absolute bottom-0 left-32 h-44 w-44 bg-[#8777d9] sm:left-52"
+            />
 
-            {/* phone */}
-            <div className="relative z-10 h-[560px] w-[280px] rounded-[44px] border-[10px] border-[#172b4d] bg-white shadow-2xl">
-              <div className="absolute left-1/2 top-3 z-20 h-5 w-24 -translate-x-1/2 rounded-full bg-[#172b4d]" />
-              <div className="h-full w-full overflow-hidden rounded-[32px] bg-white p-4 pt-10">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-lg font-black text-[#172b4d]">Trelo</span>
-                  <div className="flex gap-2 text-[#42526e]">
-                    <span className="text-xs">⌕</span>
-                    <span className="text-xs">⋯</span>
-                  </div>
-                </div>
-                {[
-                  { t: "Answered: Stripe webhook retry policy", tag: "#eng", c: "#0052cc" },
-                  { t: "Action: Ship pricing page by Fri", tag: "@maya", c: "#36b37e" },
-                  { t: "Reminder sent to @kai · due tomorrow", tag: "task", c: "#ff8b00" },
-                  { t: "Digest: 12 decisions this week", tag: "weekly", c: "#8777d9" },
-                ].map((card, i) => (
-                  <div
-                    key={i}
-                    className="mb-2 rounded-lg border-l-4 bg-[#f4f5f7] p-3"
-                    style={{ borderLeftColor: card.c }}
+            {/* Hand + phone with floating animation */}
+            <motion.div
+              initial={{ opacity: 0, y: 120 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+              className="relative z-10"
+            >
+              <motion.div
+                animate={{ y: [0, -14, 0] }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="relative"
+              >
+                <img
+                  src={handPhone}
+                  alt="Hand holding a phone showing the Trelo Slack agent"
+                  width={480}
+                  height={640}
+                  className="relative z-10 w-[320px] sm:w-[420px]"
+                />
+
+                {/* Slack logo screen overlay on the phone */}
+                <div className="absolute left-1/2 top-[8%] z-20 flex h-[38%] w-[38%] -translate-x-1/2 items-center justify-center">
+                  <motion.div
+                    initial={{ scale: 0, rotate: -30, opacity: 0 }}
+                    animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 1.2, ease: "backOut" }}
+                    className="grid h-24 w-24 place-items-center rounded-2xl bg-white shadow-xl sm:h-28 sm:w-28"
                   >
-                    <div className="text-[11px] font-semibold text-[#172b4d]">
-                      {card.t}
-                    </div>
-                    <div className="mt-1 text-[10px] text-[#42526e]">{card.tag}</div>
-                  </div>
-                ))}
-                <div className="mt-3 rounded-lg border border-[#dfe1e6] p-2 text-[10px] text-[#42526e]">
-                  Ask Trelo anything…
+                    <SlackLogo />
+                  </motion.div>
                 </div>
-              </div>
-            </div>
-
-            {/* floating integration icons */}
-            <div className="absolute right-2 top-16 z-20 grid h-14 w-14 place-items-center rounded-2xl bg-white shadow-lg">
-              <span className="text-2xl">💬</span>
-            </div>
-            <div className="absolute right-8 top-40 z-20 grid h-14 w-14 place-items-center rounded-2xl bg-white shadow-lg">
-              <span className="text-2xl">📝</span>
-            </div>
-            <div className="absolute right-0 top-64 z-20 grid h-14 w-14 place-items-center rounded-2xl bg-white shadow-lg">
-              <span className="text-2xl">✅</span>
-            </div>
-            <div className="absolute right-10 top-[22rem] z-20 grid h-14 w-14 place-items-center rounded-2xl bg-white shadow-lg">
-              <span className="text-2xl">🔔</span>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </section>
     </div>
+  );
+}
+
+function SlackLogo() {
+  return (
+    <svg viewBox="0 0 60 60" className="h-14 w-14 sm:h-16 sm:w-16" aria-hidden>
+      <path fill="#E01E5A" d="M16 37a4 4 0 1 1-4-4h4v4zm2 0a4 4 0 1 1 8 0v10a4 4 0 1 1-8 0V37z" />
+      <path fill="#36C5F0" d="M22 16a4 4 0 1 1 4-4v4h-4zm0 2a4 4 0 1 1 0 8H12a4 4 0 1 1 0-8h10z" />
+      <path fill="#2EB67D" d="M43 22a4 4 0 1 1 4 4h-4v-4zm-2 0a4 4 0 1 1-8 0V12a4 4 0 1 1 8 0v10z" />
+      <path fill="#ECB22E" d="M37 43a4 4 0 1 1-4 4v-4h4zm0-2a4 4 0 1 1 0-8h10a4 4 0 1 1 0 8H37z" />
+    </svg>
   );
 }
