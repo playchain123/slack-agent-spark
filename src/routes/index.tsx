@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Trelo is the Slack agent that surfaces past answers and turns commitments into tracked tasks — automatically.",
+          "Trelo is the Slack agent that remembers what your team said, turning past threads into instant answers and commitments into tracked tasks.",
       },
       { property: "og:title", content: "Trelo — Slack's memory & follow-through agent" },
       {
@@ -55,20 +55,35 @@ function Index() {
       </header>
 
       {/* HERO */}
-      <section className="bg-[#f4f5f7]">
+      <section className="bg-white">
         <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-10 px-6 py-16 lg:grid-cols-2 lg:py-24">
           {/* LEFT */}
           <div className="max-w-xl">
-            <h1 className="text-3xl font-semibold leading-[1.2] text-black sm:text-4xl">
+            <motion.h1
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              className="text-4xl font-semibold leading-[1.1] text-black sm:text-5xl"
+            >
               Capture every decision, surface every answer.
-            </h1>
-            <p className="mt-6 text-lg text-[#42526e]">
-              Trelo is the Slack agent that remembers what your team said —
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-6 text-[15px] leading-relaxed text-[#42526e]"
+            >
+              Trelo is the Slack agent that remembers what your team said
               turning past threads into instant answers and commitments into
               tracked tasks.
-            </p>
+            </motion.p>
 
-            <form className="mt-8 flex max-w-md gap-2">
+            <motion.form
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-8 flex max-w-md gap-2"
+            >
               <input
                 type="email"
                 placeholder="Work email"
@@ -80,66 +95,218 @@ function Index() {
               >
                 Add to Slack — free
               </button>
-            </form>
+            </motion.form>
           </div>
 
-          {/* RIGHT — hand-holding-phone mockup with animation */}
-          <div className="relative flex min-h-[560px] items-center justify-center">
-            {/* decorative shapes */}
-            <motion.div
-              initial={{ opacity: 0, y: 40, rotate: 0 }}
-              animate={{ opacity: 1, y: 0, rotate: 12 }}
-              transition={{ duration: 0.9, delay: 0.3, ease: "easeOut" }}
-              className="absolute bottom-8 left-4 h-40 w-40 bg-[#ff8b00] sm:left-16"
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 40, rotate: 0 }}
-              animate={{ opacity: 1, y: 0, rotate: -6 }}
-              transition={{ duration: 0.9, delay: 0.5, ease: "easeOut" }}
-              className="absolute bottom-0 left-32 h-44 w-44 bg-[#8777d9] sm:left-52"
-            />
-
-            {/* Hand + phone with floating animation */}
-            <motion.div
-              initial={{ opacity: 0, y: 120 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-10"
-            >
-              <motion.div
-                animate={{ y: [0, -14, 0] }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="relative"
-              >
-                <img
-                  src={handPhone}
-                  alt="Hand holding a phone showing the Trelo Slack agent"
-                  width={480}
-                  height={640}
-                  className="relative z-10 w-[320px] sm:w-[420px]"
-                />
-
-                {/* Slack logo screen overlay on the phone */}
-                <div className="absolute left-1/2 top-[8%] z-20 flex h-[38%] w-[38%] -translate-x-1/2 items-center justify-center">
-                  <motion.div
-                    initial={{ scale: 0, rotate: -30, opacity: 0 }}
-                    animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                    transition={{ duration: 0.8, delay: 1.2, ease: "backOut" }}
-                    className="grid h-24 w-24 place-items-center rounded-2xl bg-white shadow-xl sm:h-28 sm:w-28"
-                  >
-                    <SlackLogo />
-                  </motion.div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
+          {/* RIGHT — cinematic hand+phone stage */}
+          <HeroStage />
         </div>
       </section>
     </div>
+  );
+}
+
+function HeroStage() {
+  return (
+    <div className="relative flex min-h-[640px] items-center justify-center overflow-visible">
+      {/* soft radial spotlight */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.4, ease: "easeOut" }}
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgba(0,82,204,0.10), rgba(255,255,255,0) 70%)",
+        }}
+      />
+
+      {/* orbit rings */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1, rotate: 360 }}
+        transition={{
+          opacity: { duration: 1.2, delay: 0.4 },
+          scale: { duration: 1.2, delay: 0.4 },
+          rotate: { duration: 40, repeat: Infinity, ease: "linear" },
+        }}
+        className="pointer-events-none absolute h-[420px] w-[420px] rounded-full border border-dashed border-[#dfe1e6]"
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1, rotate: -360 }}
+        transition={{
+          opacity: { duration: 1.2, delay: 0.6 },
+          scale: { duration: 1.2, delay: 0.6 },
+          rotate: { duration: 60, repeat: Infinity, ease: "linear" },
+        }}
+        className="pointer-events-none absolute h-[540px] w-[540px] rounded-full border border-dashed border-[#ebecf0]"
+      />
+
+      {/* decorative shapes behind phone */}
+      <motion.div
+        initial={{ opacity: 0, y: 60, rotate: 0 }}
+        animate={{ opacity: 1, y: 0, rotate: 14 }}
+        transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute bottom-6 left-6 h-40 w-40 bg-[#ff8b00] sm:left-16"
+      />
+      <motion.div
+        initial={{ opacity: 0, y: 60, rotate: 0 }}
+        animate={{ opacity: 1, y: 0, rotate: -8 }}
+        transition={{ duration: 1, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute bottom-0 left-36 h-44 w-44 bg-[#8777d9] sm:left-56"
+      />
+
+      {/* Curved arrow pointing to phone */}
+      <svg
+        viewBox="0 0 300 240"
+        className="pointer-events-none absolute -top-2 right-6 h-40 w-52 text-black"
+        fill="none"
+      >
+        <motion.path
+          d="M20 40 C 90 10, 200 20, 250 130"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.4, delay: 0.9, ease: "easeInOut" }}
+        />
+        <motion.path
+          d="M235 118 L252 132 L238 148"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 2.2 }}
+        />
+      </svg>
+
+      {/* Hand + phone */}
+      <motion.div
+        initial={{ opacity: 0, y: 140, scale: 0.94 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10"
+      >
+        <motion.div
+          animate={{ y: [0, -14, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="relative"
+        >
+          <img
+            src={handPhone}
+            alt="Hand holding a phone showing the Trelo Slack agent"
+            width={480}
+            height={640}
+            className="relative z-10 w-[320px] sm:w-[420px] drop-shadow-2xl"
+          />
+
+          {/* Slack logo on screen */}
+          <div className="absolute left-1/2 top-[10%] z-20 flex h-[36%] w-[36%] -translate-x-1/2 items-center justify-center">
+            <motion.div
+              initial={{ scale: 0, rotate: -40, opacity: 0 }}
+              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+              transition={{ duration: 0.9, delay: 1.4, ease: "backOut" }}
+              className="grid h-24 w-24 place-items-center rounded-2xl bg-white shadow-2xl sm:h-28 sm:w-28"
+            >
+              <SlackLogo />
+            </motion.div>
+          </div>
+
+          {/* Floating message pill 1 */}
+          <motion.div
+            initial={{ opacity: 0, x: -40, y: 20 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              y: [0, -8, 0],
+            }}
+            transition={{
+              opacity: { duration: 0.6, delay: 1.8 },
+              x: { duration: 0.8, delay: 1.8, ease: [0.16, 1, 0.3, 1] },
+              y: { duration: 4, delay: 2.4, repeat: Infinity, ease: "easeInOut" },
+            }}
+            className="absolute -left-14 top-1/3 z-30 rounded-xl border border-[#dfe1e6] bg-white px-3 py-2 shadow-xl sm:-left-20"
+          >
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-[#2eb67d]" />
+              <span className="text-[11px] font-semibold text-black">
+                Answer found
+              </span>
+            </div>
+            <p className="mt-1 text-[10px] text-[#42526e]">
+              3 past threads matched
+            </p>
+          </motion.div>
+
+          {/* Floating message pill 2 */}
+          <motion.div
+            initial={{ opacity: 0, x: 40, y: -20 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              y: [0, 10, 0],
+            }}
+            transition={{
+              opacity: { duration: 0.6, delay: 2.1 },
+              x: { duration: 0.8, delay: 2.1, ease: [0.16, 1, 0.3, 1] },
+              y: { duration: 5, delay: 2.8, repeat: Infinity, ease: "easeInOut" },
+            }}
+            className="absolute -right-10 top-[22%] z-30 rounded-xl border border-[#dfe1e6] bg-white px-3 py-2 shadow-xl sm:-right-16"
+          >
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-[#ff8b00]" />
+              <span className="text-[11px] font-semibold text-black">
+                Task created
+              </span>
+            </div>
+            <p className="mt-1 text-[10px] text-[#42526e]">
+              @maya · due Fri
+            </p>
+          </motion.div>
+
+          {/* Floating integration icons */}
+          <FloatingIcon
+            delay={2.3}
+            className="-right-6 top-[55%] bg-[#000000]"
+            label="N"
+          />
+          <FloatingIcon
+            delay={2.5}
+            className="-right-14 top-[70%] bg-[#611f69]"
+            label="✓"
+          />
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
+function FloatingIcon({
+  delay,
+  className,
+  label,
+}: {
+  delay: number;
+  className: string;
+  label: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.4 }}
+      animate={{ opacity: 1, scale: 1, y: [0, -8, 0] }}
+      transition={{
+        opacity: { duration: 0.5, delay },
+        scale: { duration: 0.6, delay, ease: "backOut" },
+        y: { duration: 4, delay: delay + 0.5, repeat: Infinity, ease: "easeInOut" },
+      }}
+      className={`absolute z-30 grid h-10 w-10 place-items-center rounded-xl text-sm font-bold text-white shadow-xl ${className}`}
+    >
+      {label}
+    </motion.div>
   );
 }
 
