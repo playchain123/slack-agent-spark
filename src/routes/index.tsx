@@ -27,7 +27,8 @@ function Index() {
     <div className="min-h-screen bg-white">
       {/* NAV */}
       <header className="w-full bg-white">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3">
+
           <div className="flex items-center gap-10">
             <a href="/" className="flex items-center gap-2">
               <div className="grid h-7 w-7 place-items-center rounded-md bg-black">
