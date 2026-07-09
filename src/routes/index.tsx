@@ -160,19 +160,20 @@ function HeroStage() {
         className="pointer-events-none absolute h-[540px] w-[540px] rounded-full border border-dashed border-[#ebecf0]"
       />
 
-      {/* decorative shapes behind phone */}
+      {/* decorative shapes — visible behind and around the phone */}
       <motion.div
-        initial={{ opacity: 0, y: 60, rotate: 0 }}
-        animate={{ opacity: 1, y: 0, rotate: 14 }}
+        initial={{ opacity: 0, y: 40, rotate: 0 }}
+        animate={{ opacity: 1, y: 0, rotate: 12 }}
         transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute bottom-6 left-6 h-40 w-40 bg-[#ff8b00] sm:left-16"
+        className="absolute -top-2 right-4 z-0 h-48 w-48 bg-[#ff8b00] sm:right-10 sm:h-56 sm:w-56"
       />
       <motion.div
-        initial={{ opacity: 0, y: 60, rotate: 0 }}
-        animate={{ opacity: 1, y: 0, rotate: -8 }}
+        initial={{ opacity: 0, y: 40, rotate: 0 }}
+        animate={{ opacity: 1, y: 0, rotate: -10 }}
         transition={{ duration: 1, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute bottom-0 left-36 h-44 w-44 bg-[#8777d9] sm:left-56"
+        className="absolute -bottom-2 left-2 z-0 h-52 w-52 bg-[#8777d9] sm:left-10 sm:h-64 sm:w-64"
       />
+
 
       {/* Curved arrow pointing to phone — kept above phone card */}
       <svg
