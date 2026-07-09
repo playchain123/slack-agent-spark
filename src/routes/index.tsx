@@ -123,7 +123,7 @@ function Index() {
 
 function HeroStage() {
   return (
-    <div className="relative flex min-h-[640px] items-center justify-center overflow-visible">
+    <div className="relative flex min-h-[560px] items-center justify-center overflow-visible">
       {/* soft radial spotlight */}
       <motion.div
         initial={{ opacity: 0, scale: 0.6 }}
