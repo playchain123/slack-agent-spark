@@ -220,7 +220,7 @@ function HeroStage() {
             alt="Hand holding a phone showing the Trelo Slack agent"
             width={480}
             height={640}
-            className="relative z-10 w-[320px] sm:w-[420px] drop-shadow-2xl"
+            className="relative z-10 w-[300px] mix-blend-multiply sm:w-[380px]"
           />
 
           {/* Slack logo on screen */}
