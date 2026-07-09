@@ -172,14 +172,14 @@ function HeroStage() {
         className="absolute bottom-0 left-36 h-44 w-44 bg-[#8777d9] sm:left-56"
       />
 
-      {/* Curved arrow pointing to phone */}
+      {/* Curved arrow pointing to phone — kept above phone card */}
       <svg
         viewBox="0 0 300 240"
-        className="pointer-events-none absolute -top-2 right-6 h-40 w-52 text-black"
+        className="pointer-events-none absolute -top-4 right-0 z-40 h-48 w-60 text-black sm:-right-4 sm:h-56 sm:w-72"
         fill="none"
       >
         <motion.path
-          d="M20 40 C 90 10, 200 20, 250 130"
+          d="M30 30 C 120 0, 240 20, 270 160"
           stroke="currentColor"
           strokeWidth="2.5"
           strokeLinecap="round"
@@ -188,7 +188,7 @@ function HeroStage() {
           transition={{ duration: 1.4, delay: 0.9, ease: "easeInOut" }}
         />
         <motion.path
-          d="M235 118 L252 132 L238 148"
+          d="M255 148 L272 162 L258 180"
           stroke="currentColor"
           strokeWidth="2.5"
           strokeLinecap="round"
@@ -198,6 +198,7 @@ function HeroStage() {
           transition={{ duration: 0.4, delay: 2.2 }}
         />
       </svg>
+
 
       {/* Hand + phone */}
       <motion.div
