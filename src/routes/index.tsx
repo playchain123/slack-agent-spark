@@ -43,12 +43,13 @@ function Index() {
               </button>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button className="text-[15px] font-medium text-black hover:opacity-70">
               Log in
             </button>
-            <button className="rounded-md bg-black px-5 py-2.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800">
-              Create account
+            <button className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800">
+              <SlackLogo small />
+              Continue with Slack
             </button>
           </div>
         </div>
