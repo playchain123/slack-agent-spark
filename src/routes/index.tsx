@@ -45,9 +45,9 @@ function Index() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <button className="text-[12px] font-medium text-black hover:opacity-70">
+            <Link to="/dashboard" className="text-[12px] font-medium text-black hover:opacity-70">
               Log in
-            </button>
+            </Link>
             <button
               type="button"
               className="rounded-md bg-black px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:bg-neutral-800"
