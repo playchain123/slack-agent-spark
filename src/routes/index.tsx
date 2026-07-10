@@ -168,15 +168,15 @@ function AnimatedText({
 
 function Trelo101() {
   return (
-    <section className="bg-white py-10 lg:py-14">
+    <section className="bg-white py-5 lg:py-6">
       <div className="mx-auto max-w-[1400px] px-6">
-        <AnimatedText className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#172b4d]">
+        <AnimatedText className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#172b4d]">
           Trelo 101
         </AnimatedText>
         <AnimatedText
           as="p"
           delay={0.1}
-          className="mt-3 max-w-xl text-[15px] leading-relaxed text-[#42526e]"
+          className="mt-2 max-w-xl text-[14px] leading-relaxed text-[#42526e]"
         >
           Trelo agent remembers your team's conversations. It searches past
           threads to give instant answers and turns promises made in Slack into
