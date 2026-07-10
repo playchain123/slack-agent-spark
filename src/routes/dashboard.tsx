@@ -118,7 +118,6 @@ function Dashboard() {
             </div>
             <span className="text-[13px] font-bold tracking-tight">trelo</span>
           </Link>
-          <span className="ml-2 text-[11px] text-[#616061]">Ravel workspace</span>
         </div>
         <div className="mx-auto flex w-full max-w-md items-center gap-1.5 rounded-md border border-[#e8e8e8] bg-[#f8f8f8] px-2 py-1">
           <SearchIcon />
@@ -136,44 +135,13 @@ function Dashboard() {
 
       <div className="flex h-[calc(100vh-44px)]">
         {/* Left sidebar */}
-        <aside className="hidden w-56 shrink-0 border-r border-[#e8e8e8] bg-[#f8f8f8] md:block">
+        <aside className="hidden w-48 shrink-0 border-r border-[#e8e8e8] bg-[#f8f8f8] md:block">
           <nav className="px-2 py-3 text-[12px] text-[#1d1c1d]">
             <SidebarItem icon={<InboxIcon />} label="Threads" badge="4" />
             <SidebarItem icon={<BoltIcon />} label="Trelo agent" active />
             <SidebarItem icon={<CheckIcon />} label="Commitments" badge={String(openTasks)} />
             <SidebarItem icon={<DocIcon />} label="Digests" />
             <SidebarItem icon={<StarIcon />} label="Saved" />
-
-            <SectionLabel>Channels</SectionLabel>
-            {channelsSidebar.map((c) => (
-              <RowButton
-                key={c.id}
-                active={activeChannel === c.name}
-                onClick={() => setActiveChannel(c.name)}
-              >
-                <span className="text-[#616061]">#</span>
-                <span className="flex-1 truncate">{c.name}</span>
-                {c.dot && <span className="h-1.5 w-1.5 rounded-full bg-[#e01e5a]" />}
-                {c.unread && (
-                  <span className="rounded bg-[#1264a3] px-1 text-[10px] font-semibold text-white">
-                    {c.unread}
-                  </span>
-                )}
-              </RowButton>
-            ))}
-
-            <SectionLabel>Direct messages</SectionLabel>
-            {dms.map((d) => (
-              <RowButton key={d.id}>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#2eb67d]" />
-                <span className="flex-1 truncate">{d.name}</span>
-                {d.unread && (
-                  <span className="rounded bg-[#1264a3] px-1 text-[10px] font-semibold text-white">
-                    {d.unread}
-                  </span>
-                )}
-              </RowButton>
-            ))}
           </nav>
         </aside>
 
@@ -183,7 +151,6 @@ function Dashboard() {
           <div className="flex items-center justify-between border-b border-[#e8e8e8] px-5 py-2.5">
             <div className="flex items-center gap-2">
               <h1 className="text-[13px] font-bold">#{activeChannel}</h1>
-              <span className="text-[11px] text-[#616061]">· Trelo is watching</span>
             </div>
             <div className="flex items-center gap-1">
               <button className="rounded p-1 hover:bg-[#f2f2f2]"><PinIcon /></button>
@@ -267,20 +234,6 @@ function Dashboard() {
                   <div className="text-[11px] font-semibold text-[#1d1c1d]">{a.q}</div>
                   <p className="mt-1 text-[11px] leading-snug text-[#616061]">{a.a}</p>
                   <div className="mt-1 text-[10px] text-[#a0a0a0]">{a.sources}</div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#616061]">
-              Watching
-            </div>
-            <ul className="mt-2 space-y-1.5 text-[11px]">
-              {["#product", "#engineering", "#customers", "#marketing"].map((c) => (
-                <li key={c} className="flex items-center justify-between">
-                  <span className="text-[#1d1c1d]">{c}</span>
-                  <span className="text-[#a0a0a0]">indexed</span>
                 </li>
               ))}
             </ul>
