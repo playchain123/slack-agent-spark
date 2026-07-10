@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import handPhone from "@/assets/hand-phone.png";
 
@@ -45,9 +45,9 @@ function Index() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <button className="text-[12px] font-medium text-black hover:opacity-70">
+            <Link to="/dashboard" className="text-[12px] font-medium text-black hover:opacity-70">
               Log in
-            </button>
+            </Link>
             <button
               type="button"
               className="rounded-md bg-black px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:bg-neutral-800"
@@ -60,16 +60,17 @@ function Index() {
 
       {/* HERO */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-4 pt-0 lg:grid-cols-2 lg:pb-6 lg:pt-0">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-6 px-6 pb-4 pt-0 lg:grid-cols-2 lg:pb-6 lg:pt-0">
           {/* LEFT */}
           <div className="max-w-xl">
+            <AvatarRow />
             <motion.h1
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-              className="text-4xl font-semibold leading-[1.1] text-black sm:text-5xl"
+              className="mt-6 text-5xl font-black leading-[1.05] tracking-tight text-black sm:text-6xl"
             >
-              Capture every decision, surface every answer.
+              Capture every decision, surface every answer
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 16 }}
@@ -119,7 +120,9 @@ function Index() {
 
 
           {/* RIGHT — cinematic hand+phone stage */}
-          <HeroStage />
+          <div className="mt-10 lg:mt-20">
+            <HeroStage />
+          </div>
         </div>
       </section>
 
@@ -165,6 +168,42 @@ function AnimatedText({
   );
 }
 
+
+function AvatarRow() {
+  const avatars = [
+    { bg: "#ffffff", ring: "#dfe1e6", emoji: "👩🏻" },
+    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🙂" },
+    { bg: "#e01e5a", ring: "#e01e5a", emoji: "🚩" },
+    { bg: "#ffffff", ring: "#ffb020", emoji: "🧑🏽" },
+    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🙃" },
+    { bg: "#2684ff", ring: "#2684ff", emoji: "📁" },
+    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🧑🏼‍🦱" },
+  ];
+  return (
+    <motion.div
+      initial="hidden"
+      animate="show"
+      transition={{ staggerChildren: 0.08, delayChildren: 0.1 }}
+      className="flex -space-x-2"
+      aria-hidden
+    >
+      {avatars.map((a, i) => (
+        <motion.div
+          key={i}
+          variants={{
+            hidden: { opacity: 0, scale: 0.4, y: -8 },
+            show: { opacity: 1, scale: 1, y: 0 },
+          }}
+          transition={{ duration: 0.5, ease: "backOut" }}
+          className="grid h-11 w-11 place-items-center rounded-full border-[2.5px] text-lg shadow-sm sm:h-12 sm:w-12"
+          style={{ backgroundColor: a.bg, borderColor: a.ring }}
+        >
+          <span>{a.emoji}</span>
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
 
 function Trelo101() {
   return (
