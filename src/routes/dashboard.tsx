@@ -118,7 +118,6 @@ function Dashboard() {
             </div>
             <span className="text-[13px] font-bold tracking-tight">trelo</span>
           </Link>
-          <span className="ml-2 text-[11px] text-[#616061]">Ravel workspace</span>
         </div>
         <div className="mx-auto flex w-full max-w-md items-center gap-1.5 rounded-md border border-[#e8e8e8] bg-[#f8f8f8] px-2 py-1">
           <SearchIcon />
@@ -152,7 +151,6 @@ function Dashboard() {
           <div className="flex items-center justify-between border-b border-[#e8e8e8] px-5 py-2.5">
             <div className="flex items-center gap-2">
               <h1 className="text-[13px] font-bold">#{activeChannel}</h1>
-              <span className="text-[11px] text-[#616061]">· Trelo is watching</span>
             </div>
             <div className="flex items-center gap-1">
               <button className="rounded p-1 hover:bg-[#f2f2f2]"><PinIcon /></button>
@@ -236,20 +234,6 @@ function Dashboard() {
                   <div className="text-[11px] font-semibold text-[#1d1c1d]">{a.q}</div>
                   <p className="mt-1 text-[11px] leading-snug text-[#616061]">{a.a}</p>
                   <div className="mt-1 text-[10px] text-[#a0a0a0]">{a.sources}</div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#616061]">
-              Watching
-            </div>
-            <ul className="mt-2 space-y-1.5 text-[11px]">
-              {["#product", "#engineering", "#customers", "#marketing"].map((c) => (
-                <li key={c} className="flex items-center justify-between">
-                  <span className="text-[#1d1c1d]">{c}</span>
-                  <span className="text-[#a0a0a0]">indexed</span>
                 </li>
               ))}
             </ul>
