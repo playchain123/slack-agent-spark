@@ -60,7 +60,7 @@ function Index() {
 
       {/* HERO */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-10 pt-0 lg:grid-cols-2 lg:pb-16 lg:pt-0">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-4 pt-0 lg:grid-cols-2 lg:pb-6 lg:pt-0">
           {/* LEFT */}
           <div className="max-w-xl">
             <motion.h1
