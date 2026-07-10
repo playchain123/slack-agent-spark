@@ -169,17 +169,17 @@ function AnimatedText({
 
 function Trelo101() {
   return (
-    <section className="bg-white py-16 lg:py-24">
+    <section className="bg-white py-10 lg:py-14">
       <div className="mx-auto max-w-[1400px] px-6">
-        <AnimatedText className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#0052cc]">
+        <AnimatedText className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#172b4d]">
           Trelo 101
         </AnimatedText>
         <AnimatedText
           as="p"
           delay={0.1}
-          className="mt-4 max-w-3xl text-[21px] leading-relaxed text-[#172b4d] sm:text-[25px]"
+          className="mt-3 max-w-xl text-[15px] leading-relaxed text-[#42526e]"
         >
-          Trelo agent remembers your team’s conversations. It searches past
+          Trelo agent remembers your team's conversations. It searches past
           threads to give instant answers and turns promises made in Slack into
           actual tracked tasks. Teams that live in Slack and need their
           conversations to become searchable, actionable, and accountable.
@@ -188,6 +188,7 @@ function Trelo101() {
     </section>
   );
 }
+
 
 function FeaturesSection() {
   const features = [
