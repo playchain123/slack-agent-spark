@@ -123,6 +123,7 @@ function Index() {
         </div>
       </section>
 
+      <Trelo101 />
       <FeaturesSection />
       <HowItWorks />
       <IntegrationsSection />
