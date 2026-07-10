@@ -59,16 +59,25 @@ function Index() {
       </header>
 
       {/* HERO */}
-      <section className="bg-white">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-6 px-6 pb-4 pt-0 lg:grid-cols-2 lg:pb-6 lg:pt-0">
+      <section className="relative overflow-hidden bg-white">
+        {/* floating doodle icons scattered across hero */}
+        <FloatingDoodle className="left-[2%] top-[8%]" delay={0.2} rotate={-12}><DoodleFace variant="a" size={44} /></FloatingDoodle>
+        <FloatingDoodle className="left-[46%] top-[4%]" delay={0.35} rotate={8}><DoodleSparkle size={38} /></FloatingDoodle>
+        <FloatingDoodle className="right-[3%] top-[6%]" delay={0.5} rotate={14}><DoodleFolder size={48} /></FloatingDoodle>
+        <FloatingDoodle className="left-[3%] top-[52%]" delay={0.6} rotate={-6}><DoodleSignpost size={52} /></FloatingDoodle>
+        <FloatingDoodle className="left-[38%] bottom-[6%]" delay={0.75} rotate={-10}><DoodleFace variant="c" size={46} /></FloatingDoodle>
+        <FloatingDoodle className="right-[6%] bottom-[10%]" delay={0.9} rotate={10}><DoodleArrow size={56} /></FloatingDoodle>
+        <FloatingDoodle className="right-[42%] top-[38%]" delay={1.0} rotate={0}><DoodleStar size={30} /></FloatingDoodle>
+
+        <div className="relative mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-6 px-6 pb-4 pt-14 lg:grid-cols-2 lg:pb-6 lg:pt-20">
           {/* LEFT */}
           <div className="max-w-xl">
-            <AvatarRow />
+            <DoodleRow />
             <motion.h1
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 text-5xl font-black leading-[1.05] tracking-tight text-black sm:text-6xl"
+              className="mt-8 text-5xl font-black leading-[1.05] tracking-tight text-black sm:text-6xl"
             >
               Capture every decision, surface every answer
             </motion.h1>
