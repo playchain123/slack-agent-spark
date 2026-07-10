@@ -59,16 +59,25 @@ function Index() {
       </header>
 
       {/* HERO */}
-      <section className="bg-white">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-6 px-6 pb-4 pt-0 lg:grid-cols-2 lg:pb-6 lg:pt-0">
+      <section className="relative overflow-hidden bg-white">
+        {/* floating doodle icons scattered across hero */}
+        <FloatingDoodle className="left-[2%] top-[8%]" delay={0.2} rotate={-12}><DoodleFace variant="a" size={44} /></FloatingDoodle>
+        <FloatingDoodle className="left-[46%] top-[4%]" delay={0.35} rotate={8}><DoodleSparkle size={38} /></FloatingDoodle>
+        <FloatingDoodle className="right-[3%] top-[6%]" delay={0.5} rotate={14}><DoodleFolder size={48} /></FloatingDoodle>
+        <FloatingDoodle className="left-[3%] top-[52%]" delay={0.6} rotate={-6}><DoodleSignpost size={52} /></FloatingDoodle>
+        <FloatingDoodle className="left-[38%] bottom-[6%]" delay={0.75} rotate={-10}><DoodleFace variant="c" size={46} /></FloatingDoodle>
+        <FloatingDoodle className="right-[6%] bottom-[10%]" delay={0.9} rotate={10}><DoodleArrow size={56} /></FloatingDoodle>
+        <FloatingDoodle className="right-[42%] top-[38%]" delay={1.0} rotate={0}><DoodleStar size={30} /></FloatingDoodle>
+
+        <div className="relative mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-6 px-6 pb-4 pt-14 lg:grid-cols-2 lg:pb-6 lg:pt-20">
           {/* LEFT */}
           <div className="max-w-xl">
-            <AvatarRow />
+            <DoodleRow />
             <motion.h1
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 text-5xl font-black leading-[1.05] tracking-tight text-black sm:text-6xl"
+              className="mt-8 text-5xl font-black leading-[1.05] tracking-tight text-black sm:text-6xl"
             >
               Capture every decision, surface every answer
             </motion.h1>
@@ -169,15 +178,15 @@ function AnimatedText({
 }
 
 
-function AvatarRow() {
-  const avatars = [
-    { bg: "#ffffff", ring: "#dfe1e6", emoji: "👩🏻" },
-    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🙂" },
-    { bg: "#e01e5a", ring: "#e01e5a", emoji: "🚩" },
-    { bg: "#ffffff", ring: "#ffb020", emoji: "🧑🏽" },
-    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🙃" },
-    { bg: "#2684ff", ring: "#2684ff", emoji: "📁" },
-    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🧑🏼‍🦱" },
+function DoodleRow() {
+  const icons = [
+    { el: <DoodleFace variant="a" size={40} />, ring: "#4c9aff" },
+    { el: <DoodleFace variant="b" size={40} />, ring: "#dfe1e6" },
+    { el: <DoodleSignpost size={40} />, ring: "#e01e5a" },
+    { el: <DoodleFace variant="c" size={40} />, ring: "#ffb020" },
+    { el: <DoodleFace variant="d" size={40} />, ring: "#dfe1e6" },
+    { el: <DoodleFolder size={40} />, ring: "#2684ff" },
+    { el: <DoodleFace variant="e" size={40} />, ring: "#ff7452" },
   ];
   return (
     <motion.div
@@ -187,7 +196,7 @@ function AvatarRow() {
       className="flex -space-x-2"
       aria-hidden
     >
-      {avatars.map((a, i) => (
+      {icons.map((a, i) => (
         <motion.div
           key={i}
           variants={{
@@ -195,13 +204,144 @@ function AvatarRow() {
             show: { opacity: 1, scale: 1, y: 0 },
           }}
           transition={{ duration: 0.5, ease: "backOut" }}
-          className="grid h-11 w-11 place-items-center rounded-full border-[2.5px] text-lg shadow-sm sm:h-12 sm:w-12"
-          style={{ backgroundColor: a.bg, borderColor: a.ring }}
+          className="grid h-14 w-14 place-items-center rounded-full border-[2.5px] bg-white shadow-sm"
+          style={{ borderColor: a.ring }}
         >
-          <span>{a.emoji}</span>
+          {a.el}
         </motion.div>
       ))}
     </motion.div>
+  );
+}
+
+function FloatingDoodle({
+  children,
+  className = "",
+  delay = 0,
+  rotate = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+  rotate?: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.5, rotate: rotate - 20 }}
+      animate={{ opacity: 1, scale: 1, rotate }}
+      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={`pointer-events-none absolute z-0 hidden lg:block ${className}`}
+      aria-hidden
+    >
+      <motion.div
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 4 + delay, repeat: Infinity, ease: "easeInOut" }}
+      >
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ---------- Hand-drawn doodle icon set (bold black strokes) ---------- */
+
+function DoodleFace({ variant = "a", size = 40 }: { variant?: "a" | "b" | "c" | "d" | "e"; size?: number }) {
+  const s = { width: size, height: size } as const;
+  const stroke = { stroke: "#111", strokeWidth: 2.4, fill: "none", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  if (variant === "a") {
+    // side profile with bangs
+    return (
+      <svg viewBox="0 0 40 40" {...s}>
+        <path {...stroke} d="M12 30c-2-4-2-10 1-14 3-4 9-5 13-2 3 2 4 6 3 10-1 3-4 5-7 5" />
+        <path {...stroke} d="M13 16c2-3 6-4 9-3" />
+        <circle cx="22" cy="22" r="1.4" fill="#111" />
+      </svg>
+    );
+  }
+  if (variant === "b") {
+    // squinting face
+    return (
+      <svg viewBox="0 0 40 40" {...s}>
+        <circle {...stroke} cx="20" cy="20" r="11" />
+        <path {...stroke} d="M13 18c1.5-1.5 3.5-1.5 5 0M22 18c1.5-1.5 3.5-1.5 5 0" />
+        <path {...stroke} d="M15 25c2 1.5 8 1.5 10 0" />
+      </svg>
+    );
+  }
+  if (variant === "c") {
+    // curly hair face
+    return (
+      <svg viewBox="0 0 40 40" {...s}>
+        <path {...stroke} d="M9 16c0-6 5-10 11-10s11 4 11 10" />
+        <circle {...stroke} cx="20" cy="22" r="10" />
+        <circle cx="16" cy="21" r="1.4" fill="#111" />
+        <circle cx="24" cy="21" r="1.4" fill="#111" />
+        <path {...stroke} d="M17 26c1 1 5 1 6 0" />
+      </svg>
+    );
+  }
+  if (variant === "d") {
+    // winking face
+    return (
+      <svg viewBox="0 0 40 40" {...s}>
+        <circle {...stroke} cx="20" cy="20" r="11" />
+        <circle cx="15" cy="18" r="1.6" fill="#111" />
+        <path {...stroke} d="M22 18c1.5-1 3.5-1 5 0" />
+        <path {...stroke} d="M15 25c2 2 8 2 10 0" />
+      </svg>
+    );
+  }
+  // e — glasses
+  return (
+    <svg viewBox="0 0 40 40" {...s}>
+      <circle {...stroke} cx="20" cy="20" r="11" />
+      <circle {...stroke} cx="15" cy="19" r="3" />
+      <circle {...stroke} cx="25" cy="19" r="3" />
+      <path {...stroke} d="M18 19h4" />
+      <path {...stroke} d="M15 26c2 1.5 8 1.5 10 0" />
+    </svg>
+  );
+}
+
+function DoodleSignpost({ size = 40 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size}>
+      <path d="M20 6v28" stroke="#111" strokeWidth="2.6" strokeLinecap="round" fill="none" />
+      <path d="M9 10h18l4 4-4 4H9z" fill="#e01e5a" stroke="#111" strokeWidth="2.4" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DoodleFolder({ size = 40 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size}>
+      <path d="M6 12h10l3 3h15v17H6z" fill="#2684ff" stroke="#111" strokeWidth="2.4" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DoodleSparkle({ size = 30 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size}>
+      <path d="M20 4l3 12 12 4-12 3-3 13-3-13-12-3 12-4z" fill="#ffcf3d" stroke="#111" strokeWidth="2.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DoodleArrow({ size = 50 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 60 60" width={size} height={size}>
+      <path d="M6 40c8-20 24-28 44-24" stroke="#111" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      <path d="M40 12l10 4-4 10" stroke="#111" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DoodleStar({ size = 28 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size}>
+      <path d="M20 6l4 10 10 1-8 7 3 10-9-6-9 6 3-10-8-7 10-1z" fill="#8777d9" stroke="#111" strokeWidth="2.2" strokeLinejoin="round" />
+    </svg>
   );
 }
 
