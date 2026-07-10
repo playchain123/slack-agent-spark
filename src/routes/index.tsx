@@ -169,6 +169,42 @@ function AnimatedText({
 }
 
 
+function AvatarRow() {
+  const avatars = [
+    { bg: "#ffffff", ring: "#dfe1e6", emoji: "👩🏻" },
+    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🙂" },
+    { bg: "#e01e5a", ring: "#e01e5a", emoji: "🚩" },
+    { bg: "#ffffff", ring: "#ffb020", emoji: "🧑🏽" },
+    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🙃" },
+    { bg: "#2684ff", ring: "#2684ff", emoji: "📁" },
+    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🧑🏼‍🦱" },
+  ];
+  return (
+    <motion.div
+      initial="hidden"
+      animate="show"
+      transition={{ staggerChildren: 0.08, delayChildren: 0.1 }}
+      className="flex -space-x-2"
+      aria-hidden
+    >
+      {avatars.map((a, i) => (
+        <motion.div
+          key={i}
+          variants={{
+            hidden: { opacity: 0, scale: 0.4, y: -8 },
+            show: { opacity: 1, scale: 1, y: 0 },
+          }}
+          transition={{ duration: 0.5, ease: "backOut" }}
+          className="grid h-11 w-11 place-items-center rounded-full border-[2.5px] text-lg shadow-sm sm:h-12 sm:w-12"
+          style={{ backgroundColor: a.bg, borderColor: a.ring }}
+        >
+          <span>{a.emoji}</span>
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
+
 function Trelo101() {
   return (
     <section className="bg-white py-5 lg:py-6">
