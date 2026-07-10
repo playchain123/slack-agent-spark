@@ -48,9 +48,12 @@ function Index() {
             <button className="text-[15px] font-medium text-black hover:opacity-70">
               Log in
             </button>
-            <button className="inline-flex items-center gap-2 rounded-md bg-black px-4 py-2.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800">
+            <button
+              type="button"
+              aria-label="Continue with Slack"
+              className="grid h-8 w-8 place-items-center rounded-md bg-black shadow-sm transition hover:bg-neutral-800"
+            >
               <SlackLogo small />
-              Continue with Slack
             </button>
           </div>
         </div>
