@@ -178,14 +178,6 @@ function AnimatedText({
 }
 
 
-function AvatarRow() {
-  const avatars = [
-    { bg: "#ffffff", ring: "#dfe1e6", emoji: "👩🏻" },
-    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🙂" },
-    { bg: "#e01e5a", ring: "#e01e5a", emoji: "🚩" },
-    { bg: "#ffffff", ring: "#ffb020", emoji: "🧑🏽" },
-    { bg: "#ffffff", ring: "#dfe1e6", emoji: "🙃" },
-    { bg: "#2684ff", ring: "#2684ff", emoji: "📁" },
 function DoodleRow() {
   const icons = [
     { el: <DoodleFace variant="a" size={40} />, ring: "#4c9aff" },
