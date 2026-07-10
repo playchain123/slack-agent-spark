@@ -120,7 +120,9 @@ function Index() {
 
 
           {/* RIGHT — cinematic hand+phone stage */}
-          <HeroStage />
+          <div className="mt-10 lg:mt-20">
+            <HeroStage />
+          </div>
         </div>
       </section>
 
