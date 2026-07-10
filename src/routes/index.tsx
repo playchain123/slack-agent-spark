@@ -45,23 +45,22 @@ function Index() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <button className="text-[15px] font-medium text-black hover:opacity-70">
+            <button className="text-[12px] font-medium text-black hover:opacity-70">
               Log in
             </button>
             <button
               type="button"
-              className="text-[12px] font-medium text-black hover:opacity-70"
+              className="rounded-md bg-black px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:bg-neutral-800"
             >
               Continue with Slack
             </button>
-
           </div>
         </div>
       </header>
 
       {/* HERO */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-10 pt-0 lg:grid-cols-2 lg:pb-16 lg:pt-0">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-4 pt-0 lg:grid-cols-2 lg:pb-6 lg:pt-0">
           {/* LEFT */}
           <div className="max-w-xl">
             <motion.h1
@@ -169,15 +168,15 @@ function AnimatedText({
 
 function Trelo101() {
   return (
-    <section className="bg-white py-10 lg:py-14">
+    <section className="bg-white py-5 lg:py-6">
       <div className="mx-auto max-w-[1400px] px-6">
-        <AnimatedText className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#172b4d]">
+        <AnimatedText className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#172b4d]">
           Trelo 101
         </AnimatedText>
         <AnimatedText
           as="p"
           delay={0.1}
-          className="mt-3 max-w-xl text-[15px] leading-relaxed text-[#42526e]"
+          className="mt-2 max-w-xl text-[14px] leading-relaxed text-[#42526e]"
         >
           Trelo agent remembers your team's conversations. It searches past
           threads to give instant answers and turns promises made in Slack into
