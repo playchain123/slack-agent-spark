@@ -50,11 +50,11 @@ function Index() {
             </button>
             <button
               type="button"
-              aria-label="Continue with Slack"
-              className="grid h-8 w-8 place-items-center rounded-md bg-black shadow-sm transition hover:bg-neutral-800"
+              className="text-[12px] font-medium text-black hover:opacity-70"
             >
-              <SlackLogo small />
+              Continue with Slack
             </button>
+
           </div>
         </div>
       </header>
