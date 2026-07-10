@@ -136,44 +136,13 @@ function Dashboard() {
 
       <div className="flex h-[calc(100vh-44px)]">
         {/* Left sidebar */}
-        <aside className="hidden w-56 shrink-0 border-r border-[#e8e8e8] bg-[#f8f8f8] md:block">
+        <aside className="hidden w-48 shrink-0 border-r border-[#e8e8e8] bg-[#f8f8f8] md:block">
           <nav className="px-2 py-3 text-[12px] text-[#1d1c1d]">
             <SidebarItem icon={<InboxIcon />} label="Threads" badge="4" />
             <SidebarItem icon={<BoltIcon />} label="Trelo agent" active />
             <SidebarItem icon={<CheckIcon />} label="Commitments" badge={String(openTasks)} />
             <SidebarItem icon={<DocIcon />} label="Digests" />
             <SidebarItem icon={<StarIcon />} label="Saved" />
-
-            <SectionLabel>Channels</SectionLabel>
-            {channelsSidebar.map((c) => (
-              <RowButton
-                key={c.id}
-                active={activeChannel === c.name}
-                onClick={() => setActiveChannel(c.name)}
-              >
-                <span className="text-[#616061]">#</span>
-                <span className="flex-1 truncate">{c.name}</span>
-                {c.dot && <span className="h-1.5 w-1.5 rounded-full bg-[#e01e5a]" />}
-                {c.unread && (
-                  <span className="rounded bg-[#1264a3] px-1 text-[10px] font-semibold text-white">
-                    {c.unread}
-                  </span>
-                )}
-              </RowButton>
-            ))}
-
-            <SectionLabel>Direct messages</SectionLabel>
-            {dms.map((d) => (
-              <RowButton key={d.id}>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#2eb67d]" />
-                <span className="flex-1 truncate">{d.name}</span>
-                {d.unread && (
-                  <span className="rounded bg-[#1264a3] px-1 text-[10px] font-semibold text-white">
-                    {d.unread}
-                  </span>
-                )}
-              </RowButton>
-            ))}
           </nav>
         </aside>
 
