@@ -96,10 +96,11 @@ function Index() {
               />
               <button
                 type="submit"
-                className="whitespace-nowrap rounded-md bg-black px-5 py-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800"
+                className="whitespace-nowrap rounded-md bg-black px-4 py-3 text-[13px] font-medium text-white shadow-sm transition hover:bg-neutral-800"
               >
-                Sign up — it's free
+                Sign up it's free
               </button>
+
             </motion.form>
 
             <motion.button
