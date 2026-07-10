@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Trelo — Turn Slack conversations into answers and action" },
+      { name: "description", content: "Trelo is the Slack agent that remembers what your team said, turning past threads into instant answers and commitments into tracked tasks." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Trelo — Turn Slack conversations into answers and action" },
+      { property: "og:description", content: "Trelo is the Slack agent that remembers what your team said, turning past threads into instant answers and commitments into tracked tasks." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Trelo — Turn Slack conversations into answers and action" },
+      { name: "twitter:description", content: "Trelo is the Slack agent that remembers what your team said, turning past threads into instant answers and commitments into tracked tasks." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a9ec5df6-ac4c-4ee7-aa2e-6a4ec214a5f1/id-preview-9ea7902f--db072e46-406d-4e5e-85b2-93e1a97c6909.lovable.app-1783711599812.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a9ec5df6-ac4c-4ee7-aa2e-6a4ec214a5f1/id-preview-9ea7902f--db072e46-406d-4e5e-85b2-93e1a97c6909.lovable.app-1783711599812.png" },
     ],
     links: [
       {

@@ -11,11 +11,11 @@ export const Route = createFileRoute("/")({
         content:
           "Trelo is the Slack agent that remembers what your team said, turning past threads into instant answers and commitments into tracked tasks.",
       },
-      { property: "og:title", content: "Trelo — Slack's memory & follow-through agent" },
+      { property: "og:title", content: "Trelo — Turn Slack conversations into answers and action" },
       {
         property: "og:description",
         content:
-          "Search past threads, extract action items, and never lose a decision in Slack again.",
+          "Trelo is the Slack agent that remembers what your team said, turning past threads into instant answers and commitments into tracked tasks.",
       },
     ],
   }),
