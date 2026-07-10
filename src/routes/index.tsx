@@ -120,7 +120,6 @@ function Index() {
         </div>
       </section>
 
-      <LogosSection />
       <FeaturesSection />
       <HowItWorks />
       <IntegrationsSection />
@@ -162,36 +161,6 @@ function AnimatedText({
   );
 }
 
-function LogosSection() {
-  const logos = ["Linear", "Notion", "Vercel", "Ramp", "Figma", "Loom"];
-  return (
-    <section className="border-y border-[#ebecf0] bg-white py-10">
-      <div className="mx-auto max-w-[1400px] px-6">
-        <AnimatedText className="text-center text-[13px] font-semibold uppercase tracking-[0.18em] text-[#6b778c]">
-          Trusted by fast-moving teams that live in Slack
-        </AnimatedText>
-        <motion.div
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-          transition={{ staggerChildren: 0.08, delayChildren: 0.2 }}
-          className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4"
-        >
-          {logos.map((l) => (
-            <motion.span
-              key={l}
-              variants={fadeUp}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="text-2xl font-black tracking-tight text-[#42526e] opacity-70"
-            >
-              {l}
-            </motion.span>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-  );
-}
 
 function FeaturesSection() {
   const features = [
