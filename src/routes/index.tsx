@@ -50,11 +50,11 @@ function Index() {
             </button>
             <button
               type="button"
-              aria-label="Continue with Slack"
-              className="grid h-8 w-8 place-items-center rounded-md bg-black shadow-sm transition hover:bg-neutral-800"
+              className="text-[12px] font-medium text-black hover:opacity-70"
             >
-              <SlackLogo small />
+              Continue with Slack
             </button>
+
           </div>
         </div>
       </header>
@@ -96,10 +96,11 @@ function Index() {
               />
               <button
                 type="submit"
-                className="whitespace-nowrap rounded-md bg-black px-5 py-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-neutral-800"
+                className="whitespace-nowrap rounded-md bg-black px-4 py-3 text-[13px] font-medium text-white shadow-sm transition hover:bg-neutral-800"
               >
-                Sign up — it's free
+                Sign up it's free
               </button>
+
             </motion.form>
 
             <motion.button
@@ -168,17 +169,17 @@ function AnimatedText({
 
 function Trelo101() {
   return (
-    <section className="bg-white py-16 lg:py-24">
+    <section className="bg-white py-10 lg:py-14">
       <div className="mx-auto max-w-[1400px] px-6">
-        <AnimatedText className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#0052cc]">
+        <AnimatedText className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#172b4d]">
           Trelo 101
         </AnimatedText>
         <AnimatedText
           as="p"
           delay={0.1}
-          className="mt-4 max-w-3xl text-[21px] leading-relaxed text-[#172b4d] sm:text-[25px]"
+          className="mt-3 max-w-xl text-[15px] leading-relaxed text-[#42526e]"
         >
-          Trelo agent remembers your team’s conversations. It searches past
+          Trelo agent remembers your team's conversations. It searches past
           threads to give instant answers and turns promises made in Slack into
           actual tracked tasks. Teams that live in Slack and need their
           conversations to become searchable, actionable, and accountable.
@@ -187,6 +188,7 @@ function Trelo101() {
     </section>
   );
 }
+
 
 function FeaturesSection() {
   const features = [
