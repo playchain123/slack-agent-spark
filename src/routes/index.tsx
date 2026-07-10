@@ -60,16 +60,17 @@ function Index() {
 
       {/* HERO */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-6 px-6 pb-4 pt-0 lg:grid-cols-2 lg:pb-6 lg:pt-0">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-start gap-6 px-6 pb-4 pt-0 lg:grid-cols-2 lg:pb-6 lg:pt-0">
           {/* LEFT */}
           <div className="max-w-xl">
+            <AvatarRow />
             <motion.h1
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-              className="text-4xl font-semibold leading-[1.1] text-black sm:text-5xl"
+              className="mt-6 text-5xl font-black leading-[1.05] tracking-tight text-black sm:text-6xl"
             >
-              Capture every decision, surface every answer.
+              Capture every decision, surface every answer
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 16 }}
