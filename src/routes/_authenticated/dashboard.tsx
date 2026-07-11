@@ -185,12 +185,17 @@ function Sidebar({
   setView,
   collapsed,
   setCollapsed,
+  workspaceName,
+  onLogout,
 }: {
   view: View;
   setView: (v: View) => void;
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
+  workspaceName: string;
+  onLogout: () => void | Promise<void>;
 }) {
+
   const items: { id: View; label: string; icon: React.ReactNode }[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
     { id: "ask", label: "Ask Trelo", icon: <MessageSquare size={16} /> },
