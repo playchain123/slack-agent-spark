@@ -214,19 +214,21 @@ function Sidebar({
       >
         <TreloLogo size={collapsed ? 32 : 32} />
         {!collapsed && (
-          <div className="leading-tight">
-            <div className="text-[13px] font-bold" style={{ color: c.primaryDeep }}>
+          <div className="leading-tight min-w-0">
+            <div className="text-[13px] font-bold truncate" style={{ color: c.primaryDeep }}>
               Trelo
             </div>
             <div
-              className="text-[9px] uppercase tracking-widest"
+              className="text-[9px] uppercase tracking-widest truncate"
               style={{ color: c.onSurfaceVariant }}
+              title={workspaceName}
             >
-              Active in Slack
+              {workspaceName}
             </div>
           </div>
         )}
       </Link>
+
 
       <button
         className={`flex items-center ${collapsed ? "justify-center" : "justify-center gap-1.5"} rounded-lg py-2 mb-4 text-[11px] font-semibold text-white hover:opacity-90`}
