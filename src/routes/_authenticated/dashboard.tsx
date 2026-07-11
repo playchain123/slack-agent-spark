@@ -1,5 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { getMyWorkspace } from "@/lib/workspace.functions";
+import { useLogout } from "@/lib/use-logout";
+import { LogOut, Slack } from "lucide-react";
+
 import {
   LayoutDashboard,
   MessageSquare,
@@ -37,7 +42,12 @@ import {
   FileText,
 } from "lucide-react";
 
-export const Route = createFileRoute("/dashboard")({
+export const workspaceQuery = queryOptions({
+  queryKey: ["workspace"],
+  queryFn: () => getMyWorkspace(),
+});
+
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Trelo — Command Center" },
@@ -48,8 +58,12 @@ export const Route = createFileRoute("/dashboard")({
       },
     ],
   }),
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(workspaceQuery);
+  },
   component: Dashboard,
 });
+
 
 /* ---------- Design tokens ---------- */
 const c = {
@@ -100,6 +114,10 @@ function TreloLogo({ size = 32 }: { size?: number }) {
 function Dashboard() {
   const [view, setView] = useState<View>("dashboard");
   const [collapsed, setCollapsed] = useState(false);
+  const logout = useLogout();
+  const { data } = useSuspenseQuery(workspaceQuery);
+  const workspaceName = data.workspace?.name ?? "Your workspace";
+  const isConnected = Boolean(data.installation);
 
   const width = collapsed ? 64 : 240;
 
@@ -108,13 +126,21 @@ function Dashboard() {
       className="min-h-screen"
       style={{ background: c.bg, color: c.onSurface, fontFamily: "Inter, ui-sans-serif, system-ui" }}
     >
-      <Sidebar view={view} setView={setView} collapsed={collapsed} setCollapsed={setCollapsed} />
+      <Sidebar
+        view={view}
+        setView={setView}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        workspaceName={workspaceName}
+        onLogout={logout}
+      />
       <main
         className="min-h-screen flex flex-col transition-[margin-left] duration-200"
         style={{ marginLeft: width }}
       >
         <TopBar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div className="flex-1">
+          {!isConnected && <ConnectSlackBanner />}
           {view === "dashboard" && <DashboardView setView={setView} />}
           {view === "ask" && <AskTreloView />}
           {view === "commitments" && <CommitmentsView />}
@@ -125,6 +151,33 @@ function Dashboard() {
   );
 }
 
+function ConnectSlackBanner() {
+  return (
+    <div className="mx-6 mt-4 rounded-xl border p-4 flex items-center gap-4" style={{ background: "#fffbeb", borderColor: "#fde68a" }}>
+      <div className="w-10 h-10 rounded-lg grid place-items-center" style={{ background: "#fef3c7" }}>
+        <Slack size={20} strokeWidth={2.2} color="#92400e" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-bold" style={{ color: "#78350f" }}>
+          Connect your Slack workspace to start using Trelo
+        </div>
+        <div className="text-[11.5px] mt-0.5" style={{ color: "#92400e" }}>
+          You're seeing sample data. Install the Trelo Slack app to unlock real answers, commitments, and daily digests from your team's conversations.
+        </div>
+      </div>
+      <button
+        disabled
+        title="Available once your Slack app credentials are added"
+        className="h-9 px-3.5 rounded-md text-[12px] font-semibold text-white disabled:opacity-60"
+        style={{ background: "#000" }}
+      >
+        Connect Slack
+      </button>
+    </div>
+  );
+}
+
+
 /* ---------- Sidebar ---------- */
 
 function Sidebar({
@@ -132,12 +185,17 @@ function Sidebar({
   setView,
   collapsed,
   setCollapsed,
+  workspaceName,
+  onLogout,
 }: {
   view: View;
   setView: (v: View) => void;
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
+  workspaceName: string;
+  onLogout: () => void | Promise<void>;
 }) {
+
   const items: { id: View; label: string; icon: React.ReactNode }[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
     { id: "ask", label: "Ask Trelo", icon: <MessageSquare size={16} /> },
@@ -156,19 +214,21 @@ function Sidebar({
       >
         <TreloLogo size={collapsed ? 32 : 32} />
         {!collapsed && (
-          <div className="leading-tight">
-            <div className="text-[13px] font-bold" style={{ color: c.primaryDeep }}>
+          <div className="leading-tight min-w-0">
+            <div className="text-[13px] font-bold truncate" style={{ color: c.primaryDeep }}>
               Trelo
             </div>
             <div
-              className="text-[9px] uppercase tracking-widest"
+              className="text-[9px] uppercase tracking-widest truncate"
               style={{ color: c.onSurfaceVariant }}
+              title={workspaceName}
             >
-              Active in Slack
+              {workspaceName}
             </div>
           </div>
         )}
       </Link>
+
 
       <button
         className={`flex items-center ${collapsed ? "justify-center" : "justify-center gap-1.5"} rounded-lg py-2 mb-4 text-[11px] font-semibold text-white hover:opacity-90`}
@@ -207,18 +267,30 @@ function Sidebar({
         })}
       </nav>
 
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className={`mt-3 pt-3 border-t flex items-center ${collapsed ? "justify-center" : "gap-2 px-2.5"} py-2 rounded-md text-[11px] font-medium hover:bg-[#ebe7e8]`}
-        style={{ borderColor: c.outline, color: "#000" }}
-        title={collapsed ? "Open sidebar" : "Close sidebar"}
-      >
-        {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-        {!collapsed && <span>Close sidebar</span>}
-      </button>
+      <div className="mt-3 pt-3 border-t space-y-0.5" style={{ borderColor: c.outline }}>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2 px-2.5"} py-2 rounded-md text-[11px] font-medium hover:bg-[#ebe7e8]`}
+          style={{ color: "#000" }}
+          title={collapsed ? "Open sidebar" : "Close sidebar"}
+        >
+          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          {!collapsed && <span>Close sidebar</span>}
+        </button>
+        <button
+          onClick={() => { void onLogout(); }}
+          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2 px-2.5"} py-2 rounded-md text-[11px] font-medium hover:bg-[#ebe7e8]`}
+          style={{ color: "#000" }}
+          title="Log out"
+        >
+          <LogOut size={16} />
+          {!collapsed && <span>Log out</span>}
+        </button>
+      </div>
     </aside>
   );
 }
+
 
 /* ---------- TopBar ---------- */
 
