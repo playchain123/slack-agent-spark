@@ -114,6 +114,10 @@ function TreloLogo({ size = 32 }: { size?: number }) {
 function Dashboard() {
   const [view, setView] = useState<View>("dashboard");
   const [collapsed, setCollapsed] = useState(false);
+  const logout = useLogout();
+  const { data } = useSuspenseQuery(workspaceQuery);
+  const workspaceName = data.workspace?.name ?? "Your workspace";
+  const isConnected = Boolean(data.installation);
 
   const width = collapsed ? 64 : 240;
 
@@ -122,13 +126,21 @@ function Dashboard() {
       className="min-h-screen"
       style={{ background: c.bg, color: c.onSurface, fontFamily: "Inter, ui-sans-serif, system-ui" }}
     >
-      <Sidebar view={view} setView={setView} collapsed={collapsed} setCollapsed={setCollapsed} />
+      <Sidebar
+        view={view}
+        setView={setView}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        workspaceName={workspaceName}
+        onLogout={logout}
+      />
       <main
         className="min-h-screen flex flex-col transition-[margin-left] duration-200"
         style={{ marginLeft: width }}
       >
         <TopBar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div className="flex-1">
+          {!isConnected && <ConnectSlackBanner />}
           {view === "dashboard" && <DashboardView setView={setView} />}
           {view === "ask" && <AskTreloView />}
           {view === "commitments" && <CommitmentsView />}
@@ -138,6 +150,33 @@ function Dashboard() {
     </div>
   );
 }
+
+function ConnectSlackBanner() {
+  return (
+    <div className="mx-6 mt-4 rounded-xl border p-4 flex items-center gap-4" style={{ background: "#fffbeb", borderColor: "#fde68a" }}>
+      <div className="w-10 h-10 rounded-lg grid place-items-center" style={{ background: "#fef3c7" }}>
+        <Slack size={20} strokeWidth={2.2} color="#92400e" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-bold" style={{ color: "#78350f" }}>
+          Connect your Slack workspace to start using Trelo
+        </div>
+        <div className="text-[11.5px] mt-0.5" style={{ color: "#92400e" }}>
+          You're seeing sample data. Install the Trelo Slack app to unlock real answers, commitments, and daily digests from your team's conversations.
+        </div>
+      </div>
+      <button
+        disabled
+        title="Available once your Slack app credentials are added"
+        className="h-9 px-3.5 rounded-md text-[12px] font-semibold text-white disabled:opacity-60"
+        style={{ background: "#000" }}
+      >
+        Connect Slack
+      </button>
+    </div>
+  );
+}
+
 
 /* ---------- Sidebar ---------- */
 
