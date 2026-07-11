@@ -267,18 +267,30 @@ function Sidebar({
         })}
       </nav>
 
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className={`mt-3 pt-3 border-t flex items-center ${collapsed ? "justify-center" : "gap-2 px-2.5"} py-2 rounded-md text-[11px] font-medium hover:bg-[#ebe7e8]`}
-        style={{ borderColor: c.outline, color: "#000" }}
-        title={collapsed ? "Open sidebar" : "Close sidebar"}
-      >
-        {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-        {!collapsed && <span>Close sidebar</span>}
-      </button>
+      <div className="mt-3 pt-3 border-t space-y-0.5" style={{ borderColor: c.outline }}>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2 px-2.5"} py-2 rounded-md text-[11px] font-medium hover:bg-[#ebe7e8]`}
+          style={{ color: "#000" }}
+          title={collapsed ? "Open sidebar" : "Close sidebar"}
+        >
+          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          {!collapsed && <span>Close sidebar</span>}
+        </button>
+        <button
+          onClick={() => { void onLogout(); }}
+          className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2 px-2.5"} py-2 rounded-md text-[11px] font-medium hover:bg-[#ebe7e8]`}
+          style={{ color: "#000" }}
+          title="Log out"
+        >
+          <LogOut size={16} />
+          {!collapsed && <span>Log out</span>}
+        </button>
+      </div>
     </aside>
   );
 }
+
 
 /* ---------- TopBar ---------- */
 
