@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { getMyWorkspace } from "@/lib/workspace.functions";
+import { getSlackInstallUrl } from "@/lib/slack.functions";
 import { useLogout } from "@/lib/use-logout";
 import { LogOut, Slack } from "lucide-react";
 
