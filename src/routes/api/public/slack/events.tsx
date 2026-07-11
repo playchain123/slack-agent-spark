@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/slack/events")({
             await supabaseAdmin.from("slack_event_queue").insert({
               slack_team_id: event.team_id,
               event_type: event.type ?? "unknown",
-              payload: JSON.parse(JSON.stringify(event)) as object,
+              payload: event as unknown as Record<string, unknown>,
             });
           } catch (err) {
             console.error("Failed to queue Slack event", err);
