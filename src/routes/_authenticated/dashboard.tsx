@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { getMyWorkspace } from "@/lib/workspace.functions";
+import { getSlackInstallUrl } from "@/lib/slack.functions";
 import { useLogout } from "@/lib/use-logout";
 import { LogOut, Slack } from "lucide-react";
 
@@ -152,6 +154,20 @@ function Dashboard() {
 }
 
 function ConnectSlackBanner() {
+  const installFn = useServerFn(getSlackInstallUrl);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function onConnect() {
+    setErr(null);
+    setLoading(true);
+    try {
+      const { url } = await installFn();
+      window.location.href = url;
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to start Slack install");
+      setLoading(false);
+    }
+  }
   return (
     <div className="mx-6 mt-4 rounded-xl border p-4 flex items-center gap-4" style={{ background: "#fffbeb", borderColor: "#fde68a" }}>
       <div className="w-10 h-10 rounded-lg grid place-items-center" style={{ background: "#fef3c7" }}>
@@ -162,16 +178,16 @@ function ConnectSlackBanner() {
           Connect your Slack workspace to start using Trelo
         </div>
         <div className="text-[11.5px] mt-0.5" style={{ color: "#92400e" }}>
-          You're seeing sample data. Install the Trelo Slack app to unlock real answers, commitments, and daily digests from your team's conversations.
+          {err ?? "You're seeing sample data. Install the Trelo Slack app to unlock real answers, commitments, and daily digests from your team's conversations."}
         </div>
       </div>
       <button
-        disabled
-        title="Available once your Slack app credentials are added"
+        onClick={onConnect}
+        disabled={loading}
         className="h-9 px-3.5 rounded-md text-[12px] font-semibold text-white disabled:opacity-60"
         style={{ background: "#000" }}
       >
-        Connect Slack
+        {loading ? "Redirecting…" : "Connect Slack"}
       </button>
     </div>
   );
