@@ -5,11 +5,9 @@ import {
   MessageSquare,
   CheckSquare,
   Newspaper,
-  BarChart3,
-  Settings,
-  HelpCircle,
   Search,
   Bell,
+  HelpCircle,
   Plus,
   Sparkles,
   ArrowRight,
@@ -31,10 +29,12 @@ import {
   Database,
   MessagesSquare,
   Zap,
-  Bot,
   ListTodo,
   Check,
   ClipboardCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
+  FileText,
 } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
@@ -44,14 +44,14 @@ export const Route = createFileRoute("/dashboard")({
       {
         name: "description",
         content:
-          "Trelo workspace: dashboard, Ask Trelo, and commitments extracted from your Slack conversations.",
+          "Trelo workspace: dashboard, Ask Trelo, commitments and activity digest from your Slack conversations.",
       },
     ],
   }),
   component: Dashboard,
 });
 
-/* ---------- Design tokens (from Trelo Stitch spec) ---------- */
+/* ---------- Design tokens ---------- */
 const c = {
   bg: "#fdf8f9",
   surface: "#fdf8f9",
@@ -59,10 +59,10 @@ const c = {
   surfaceMid: "#f1edee",
   surfaceHigh: "#ebe7e8",
   outline: "#d2c2cd",
-  primary: "#4a154b",
-  primaryDeep: "#300033",
-  primaryContainer: "#f6dcf3",
-  onPrimaryContainer: "#4a154b",
+  primary: "#000000",
+  primaryDeep: "#000000",
+  primaryContainer: "#ececec",
+  onPrimaryContainer: "#000000",
   onSurface: "#1c1b1c",
   onSurfaceVariant: "#4f434c",
   secondary: "#006c46",
@@ -75,28 +75,50 @@ const c = {
   onTertiaryFixed: "#5d4200",
 };
 
-type View = "dashboard" | "ask" | "commitments" | "digest" | "analytics";
+type View = "dashboard" | "ask" | "commitments" | "digest";
+
+/* Trelo logo mark — bold "T" on black rounded square */
+function TreloLogo({ size = 32 }: { size?: number }) {
+  return (
+    <div
+      className="rounded-lg grid place-items-center text-white font-black"
+      style={{
+        width: size,
+        height: size,
+        background: "#000",
+        fontSize: Math.round(size * 0.58),
+        fontFamily: "'Inter', ui-sans-serif, system-ui",
+        letterSpacing: "-0.05em",
+        lineHeight: 1,
+      }}
+    >
+      T
+    </div>
+  );
+}
 
 function Dashboard() {
   const [view, setView] = useState<View>("dashboard");
+  const [collapsed, setCollapsed] = useState(false);
+
+  const width = collapsed ? 64 : 240;
 
   return (
     <div
       className="min-h-screen"
       style={{ background: c.bg, color: c.onSurface, fontFamily: "Inter, ui-sans-serif, system-ui" }}
     >
-      {/* Sidebar */}
-      <Sidebar view={view} setView={setView} />
-
-      {/* Main */}
-      <main className="ml-[240px] min-h-screen flex flex-col">
-        <TopBar />
+      <Sidebar view={view} setView={setView} collapsed={collapsed} setCollapsed={setCollapsed} />
+      <main
+        className="min-h-screen flex flex-col transition-[margin-left] duration-200"
+        style={{ marginLeft: width }}
+      >
+        <TopBar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div className="flex-1">
           {view === "dashboard" && <DashboardView setView={setView} />}
           {view === "ask" && <AskTreloView />}
           {view === "commitments" && <CommitmentsView />}
-          {view === "digest" && <DigestPlaceholder title="Activity Digest" />}
-          {view === "analytics" && <DigestPlaceholder title="Analytics" />}
+          {view === "digest" && <ActivityDigestView />}
         </div>
       </main>
     </div>
@@ -105,45 +127,56 @@ function Dashboard() {
 
 /* ---------- Sidebar ---------- */
 
-function Sidebar({ view, setView }: { view: View; setView: (v: View) => void }) {
+function Sidebar({
+  view,
+  setView,
+  collapsed,
+  setCollapsed,
+}: {
+  view: View;
+  setView: (v: View) => void;
+  collapsed: boolean;
+  setCollapsed: (v: boolean) => void;
+}) {
   const items: { id: View; label: string; icon: React.ReactNode }[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
     { id: "ask", label: "Ask Trelo", icon: <MessageSquare size={16} /> },
     { id: "commitments", label: "Commitments", icon: <CheckSquare size={16} /> },
     { id: "digest", label: "Activity Digest", icon: <Newspaper size={16} /> },
-    { id: "analytics", label: "Analytics", icon: <BarChart3 size={16} /> },
   ];
+  const width = collapsed ? 64 : 240;
   return (
     <aside
-      className="fixed left-0 top-0 h-screen w-[240px] flex flex-col p-3 z-50 border-r"
-      style={{ background: c.surfaceLow, borderColor: c.outline }}
+      className="fixed left-0 top-0 h-screen flex flex-col p-3 z-50 border-r transition-[width] duration-200"
+      style={{ background: c.surfaceLow, borderColor: c.outline, width }}
     >
-      <Link to="/" className="flex items-center gap-2.5 px-2 mb-5">
-        <div
-          className="w-8 h-8 rounded-lg grid place-items-center text-white"
-          style={{ background: c.primary }}
-        >
-          <Bot size={16} strokeWidth={2.2} />
-        </div>
-        <div className="leading-tight">
-          <div className="text-[13px] font-bold" style={{ color: c.primaryDeep }}>
-            Trelo
+      <Link
+        to="/"
+        className={`flex items-center gap-2.5 mb-5 ${collapsed ? "justify-center px-0" : "px-2"}`}
+      >
+        <TreloLogo size={collapsed ? 32 : 32} />
+        {!collapsed && (
+          <div className="leading-tight">
+            <div className="text-[13px] font-bold" style={{ color: c.primaryDeep }}>
+              Trelo
+            </div>
+            <div
+              className="text-[9px] uppercase tracking-widest"
+              style={{ color: c.onSurfaceVariant }}
+            >
+              Active in Slack
+            </div>
           </div>
-          <div
-            className="text-[9px] uppercase tracking-widest"
-            style={{ color: c.onSurfaceVariant }}
-          >
-            Active in Slack
-          </div>
-        </div>
+        )}
       </Link>
 
       <button
-        className="flex items-center justify-center gap-1.5 rounded-lg py-2 mb-4 text-[11px] font-semibold text-white hover:opacity-90"
-        style={{ background: c.primary }}
+        className={`flex items-center ${collapsed ? "justify-center" : "justify-center gap-1.5"} rounded-lg py-2 mb-4 text-[11px] font-semibold text-white hover:opacity-90`}
+        style={{ background: "#000" }}
+        title="New Request"
       >
         <Plus size={13} strokeWidth={2.4} />
-        New Request
+        {!collapsed && "New Request"}
       </button>
 
       <nav className="flex-1 space-y-0.5">
@@ -153,11 +186,12 @@ function Sidebar({ view, setView }: { view: View; setView: (v: View) => void }) 
             <button
               key={it.id}
               onClick={() => setView(it.id)}
-              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-[11.5px] font-medium transition-colors"
+              title={it.label}
+              className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2"} px-2.5 py-2 rounded-md text-[11.5px] font-medium transition-colors`}
               style={
                 active
-                  ? { background: c.primaryContainer, color: c.onPrimaryContainer }
-                  : { color: c.onSurfaceVariant }
+                  ? { background: c.primaryContainer, color: "#000" }
+                  : { color: "#000" }
               }
               onMouseEnter={(e) => {
                 if (!active) (e.currentTarget.style.background = c.surfaceHigh);
@@ -167,56 +201,67 @@ function Sidebar({ view, setView }: { view: View; setView: (v: View) => void }) 
               }}
             >
               {it.icon}
-              <span>{it.label}</span>
+              {!collapsed && <span>{it.label}</span>}
             </button>
           );
         })}
       </nav>
 
-      <div className="pt-3 space-y-0.5 border-t" style={{ borderColor: c.outline }}>
-        <SidebarSub icon={<HelpCircle size={15} />}>Support</SidebarSub>
-        <SidebarSub icon={<Settings size={15} />}>Settings</SidebarSub>
-      </div>
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className={`mt-3 pt-3 border-t flex items-center ${collapsed ? "justify-center" : "gap-2 px-2.5"} py-2 rounded-md text-[11px] font-medium hover:bg-[#ebe7e8]`}
+        style={{ borderColor: c.outline, color: "#000" }}
+        title={collapsed ? "Open sidebar" : "Close sidebar"}
+      >
+        {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        {!collapsed && <span>Close sidebar</span>}
+      </button>
     </aside>
-  );
-}
-
-function SidebarSub({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <button
-      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] hover:bg-[#ebe7e8]"
-      style={{ color: c.onSurfaceVariant }}
-    >
-      {icon}
-      <span>{children}</span>
-    </button>
   );
 }
 
 /* ---------- TopBar ---------- */
 
-function TopBar() {
+function TopBar({
+  collapsed,
+  setCollapsed,
+}: {
+  collapsed: boolean;
+  setCollapsed: (v: boolean) => void;
+}) {
   return (
     <header
-      className="sticky top-0 z-40 h-14 flex items-center justify-between px-6 border-b"
+      className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 border-b"
       style={{ background: c.surface, borderColor: c.outline }}
     >
-      <div className="flex-1 max-w-xl relative">
-        <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2"
-          style={{ color: c.onSurfaceVariant }}
-        />
-        <input
-          placeholder="Search threads, documents, or insights…"
-          className="w-full rounded-full pl-9 pr-4 py-1.5 text-[12px] outline-none focus:ring-2"
-          style={{ background: c.surfaceLow, color: c.onSurface }}
-        />
+      <div className="flex items-center gap-2 flex-1 max-w-xl">
+        {collapsed && (
+          <button
+            onClick={() => setCollapsed(false)}
+            className="p-1.5 rounded-md hover:bg-[#f1edee]"
+            style={{ color: "#000" }}
+            title="Open sidebar"
+          >
+            <PanelLeftOpen size={16} />
+          </button>
+        )}
+        <div className="relative flex-1">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2"
+            style={{ color: "#000" }}
+          />
+          <input
+            placeholder="Search threads, documents, or insights…"
+            className="w-full rounded-full pl-9 pr-4 py-1.5 text-[12px] outline-none focus:ring-2"
+            style={{ background: c.surfaceLow, color: c.onSurface }}
+          />
+        </div>
       </div>
       <div className="flex items-center gap-2 ml-4">
         <button
           className="p-1.5 rounded-full hover:bg-[#f1edee] relative"
-          style={{ color: c.onSurfaceVariant }}
+          style={{ color: "#000" }}
         >
           <Bell size={15} />
           <span
@@ -224,15 +269,12 @@ function TopBar() {
             style={{ background: c.error }}
           />
         </button>
-        <button
-          className="p-1.5 rounded-full hover:bg-[#f1edee]"
-          style={{ color: c.onSurfaceVariant }}
-        >
+        <button className="p-1.5 rounded-full hover:bg-[#f1edee]" style={{ color: "#000" }}>
           <HelpCircle size={15} />
         </button>
         <div
           className="w-7 h-7 rounded-full grid place-items-center text-[10px] font-bold text-white"
-          style={{ background: c.primary }}
+          style={{ background: "#000" }}
         >
           SC
         </div>
@@ -247,40 +289,26 @@ function DashboardView({ setView }: { setView: (v: View) => void }) {
   const [ask, setAsk] = useState("");
   return (
     <div className="p-6 max-w-[1440px] mx-auto">
-      {/* Greeting */}
       <section className="mb-6">
-        <h2 className="text-[22px] font-bold leading-tight" style={{ color: c.primaryDeep }}>
+        <h2 className="text-[22px] font-bold leading-tight" style={{ color: "#000" }}>
           Good morning, Sarah
         </h2>
         <p className="mt-1 text-[12.5px] max-w-2xl" style={{ color: c.onSurfaceVariant }}>
           Trelo has analyzed 14 new Slack threads since you last checked. Your primary focus today is{" "}
-          <span className="font-semibold" style={{ color: c.primaryDeep }}>
+          <span className="font-semibold" style={{ color: "#000" }}>
             reviewing the Q3 Product Roadmap
           </span>{" "}
           and resolving 3 engineering bottlenecks.
         </p>
       </section>
 
-      {/* Metrics */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <Metric icon={<Database size={16} />} label="Threads Indexed" value="1,240" tint={c.surfaceMid} iconTint={c.primary} />
-        <Metric
-          icon={<ClipboardCheck size={16} />}
-          label="Active Commitments"
-          value="12"
-          tint={c.secondaryContainer}
-          iconTint={c.onSecondaryContainer}
-        />
-        <Metric
-          icon={<MessagesSquare size={16} />}
-          label="Answers Provided"
-          value="85"
-          tint={c.tertiaryFixed}
-          iconTint={c.onTertiaryFixed}
-        />
+        <Metric icon={<Database size={16} />} label="Threads Indexed" value="1,240" />
+        <Metric icon={<ClipboardCheck size={16} />} label="Active Commitments" value="12" />
+        <Metric icon={<MessagesSquare size={16} />} label="Answers Provided" value="85" />
         <div
           className="p-3.5 rounded-xl flex items-center gap-3"
-          style={{ background: c.primary, color: "#fff", boxShadow: "0 4px 14px rgba(48,0,51,.18)" }}
+          style={{ background: "#000", color: "#fff", boxShadow: "0 4px 14px rgba(0,0,0,.18)" }}
         >
           <div
             className="w-10 h-10 rounded-lg grid place-items-center"
@@ -295,9 +323,7 @@ function DashboardView({ setView }: { setView: (v: View) => void }) {
         </div>
       </section>
 
-      {/* Two-column */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Digest */}
         <section className="lg:col-span-8">
           <div
             className="rounded-xl border overflow-hidden"
@@ -311,8 +337,9 @@ function DashboardView({ setView }: { setView: (v: View) => void }) {
                 Daily Activity Digest
               </h3>
               <button
+                onClick={() => setView("digest")}
                 className="text-[11px] font-semibold flex items-center gap-1 hover:underline"
-                style={{ color: c.primary }}
+                style={{ color: "#000" }}
               >
                 View all threads <ExternalLink size={11} />
               </button>
@@ -322,7 +349,7 @@ function DashboardView({ setView }: { setView: (v: View) => void }) {
                 initials="PD"
                 chip="#product-design"
                 chipBg={c.primaryContainer}
-                chipFg={c.onPrimaryContainer}
+                chipFg="#000"
                 time="12:30 PM Today"
                 status={{ label: "Resolved", bg: c.secondaryContainer, fg: c.onSecondaryContainer }}
                 title="User Feedback Synthesis: Q3 Roadmap Update"
@@ -371,12 +398,10 @@ function DashboardView({ setView }: { setView: (v: View) => void }) {
           </div>
         </section>
 
-        {/* Right widgets */}
         <aside className="lg:col-span-4 space-y-4">
-          {/* Quick Ask */}
           <div
             className="p-5 rounded-xl relative overflow-hidden text-white"
-            style={{ background: c.primary, boxShadow: "0 8px 24px rgba(48,0,51,.22)" }}
+            style={{ background: "#000", boxShadow: "0 8px 24px rgba(0,0,0,.22)" }}
           >
             <div className="flex items-center gap-2 mb-2">
               <Sparkles size={15} />
@@ -402,7 +427,7 @@ function DashboardView({ setView }: { setView: (v: View) => void }) {
               />
               <button
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded grid place-items-center"
-                style={{ background: "#fff", color: c.primary }}
+                style={{ background: "#fff", color: "#000" }}
               >
                 <Send size={12} />
               </button>
@@ -413,17 +438,16 @@ function DashboardView({ setView }: { setView: (v: View) => void }) {
             </div>
           </div>
 
-          {/* Priority commitments */}
-          <div
-            className="rounded-xl border"
-            style={{ background: "#fff", borderColor: c.outline }}
-          >
+          <div className="rounded-xl border" style={{ background: "#fff", borderColor: c.outline }}>
             <div
               className="px-4 py-3 border-b flex items-center justify-between"
               style={{ borderColor: c.outline }}
             >
-              <h3 className="text-[12px] font-semibold flex items-center gap-1.5" style={{ color: c.onSurface }}>
-                <Flag size={13} style={{ color: c.primary }} /> Priority Commitments
+              <h3
+                className="text-[12px] font-semibold flex items-center gap-1.5"
+                style={{ color: c.onSurface }}
+              >
+                <Flag size={13} style={{ color: "#000" }} /> Priority Commitments
               </h3>
               <span
                 className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white"
@@ -433,11 +457,7 @@ function DashboardView({ setView }: { setView: (v: View) => void }) {
               </span>
             </div>
             <div className="p-4 space-y-3">
-              <PriorityTask
-                title="Audit navigation UI patterns"
-                due="Due Friday"
-                channel="#product-design"
-              />
+              <PriorityTask title="Audit navigation UI patterns" due="Due Friday" channel="#product-design" />
               <hr style={{ borderColor: c.surfaceMid }} />
               <PriorityTask
                 title="Sign off on Security Patch v2.4"
@@ -454,18 +474,14 @@ function DashboardView({ setView }: { setView: (v: View) => void }) {
               <button
                 onClick={() => setView("commitments")}
                 className="w-full mt-1 py-1.5 rounded-lg text-[11px] border hover:bg-[#f7f2f3]"
-                style={{ borderColor: c.outline, color: c.onSurfaceVariant }}
+                style={{ borderColor: c.outline, color: "#000" }}
               >
                 View all Commitments (12)
               </button>
             </div>
           </div>
 
-          {/* Insight */}
-          <div
-            className="p-4 rounded-xl"
-            style={{ background: "linear-gradient(135deg,#4a154b,#7a3d7a)", color: "#fff" }}
-          >
+          <div className="p-4 rounded-xl text-white" style={{ background: "#000" }}>
             <h4 className="text-[13px] font-semibold leading-tight">Intelligent Insight</h4>
             <p className="text-[11px] opacity-80 mt-1">
               Communication efficiency is up 12% this week across all engineering channels.
@@ -481,14 +497,10 @@ function Metric({
   icon,
   label,
   value,
-  tint,
-  iconTint,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  tint: string;
-  iconTint: string;
 }) {
   return (
     <div
@@ -497,7 +509,7 @@ function Metric({
     >
       <div
         className="w-10 h-10 rounded-lg grid place-items-center"
-        style={{ background: tint, color: iconTint }}
+        style={{ background: c.surfaceMid, color: "#000" }}
       >
         {icon}
       </div>
@@ -565,7 +577,7 @@ function DigestItem({
         </h4>
         <div className="rounded-lg p-3" style={{ background: c.surfaceLow }}>
           <div className="flex items-start gap-2">
-            <Sparkles size={13} style={{ color: c.primary, marginTop: 2 }} />
+            <Sparkles size={13} style={{ color: "#000", marginTop: 2 }} />
             <ul className="text-[11.5px] space-y-1" style={{ color: c.onSurfaceVariant }}>
               {bullets.map((b, i) => (
                 <li key={i}>• {b}</li>
@@ -592,10 +604,7 @@ function PriorityTask({
   return (
     <div className="group cursor-pointer">
       <div className="flex items-start gap-2.5">
-        <div
-          className="mt-0.5 w-3.5 h-3.5 rounded border-2"
-          style={{ borderColor: c.primary }}
-        />
+        <div className="mt-0.5 w-3.5 h-3.5 rounded border-2" style={{ borderColor: "#000" }} />
         <div className="flex-1">
           <p className="text-[12px] font-medium leading-tight" style={{ color: c.onSurface }}>
             {title}
@@ -603,7 +612,10 @@ function PriorityTask({
           <div className="flex items-center gap-3 mt-1">
             <span
               className="text-[10.5px] flex items-center gap-0.5"
-              style={{ color: dueUrgent ? c.error : c.onSurfaceVariant, fontWeight: dueUrgent ? 600 : 400 }}
+              style={{
+                color: dueUrgent ? c.error : c.onSurfaceVariant,
+                fontWeight: dueUrgent ? 600 : 400,
+              }}
             >
               {dueUrgent ? <Clock size={11} /> : <Calendar size={11} />}
               {due}
@@ -635,7 +647,17 @@ function Chip({ children }: { children: React.ReactNode }) {
 
 /* ---------- Ask Trelo view ---------- */
 
-type Answer = { id: string; tag: string; tagBg: string; tagFg: string; time: string; title: string; snippet: string; channel: string; sources: number };
+type Answer = {
+  id: string;
+  tag: string;
+  tagBg: string;
+  tagFg: string;
+  time: string;
+  title: string;
+  snippet: string;
+  channel: string;
+  sources: number;
+};
 
 const seedAnswers: Answer[] = [
   {
@@ -653,8 +675,8 @@ const seedAnswers: Answer[] = [
   {
     id: "a2",
     tag: "Engineering",
-    tagBg: "#f6dcf3",
-    tagFg: "#4a154b",
+    tagBg: "#ececec",
+    tagFg: "#000",
     time: "Yesterday",
     title: "Deployment Freeze",
     snippet:
@@ -688,7 +710,7 @@ function AskTreloView() {
         id: `a${Date.now()}`,
         tag: "New Answer",
         tagBg: c.primaryContainer,
-        tagFg: c.onPrimaryContainer,
+        tagFg: "#000",
         time: "just now",
         title: q.trim(),
         snippet:
@@ -705,7 +727,7 @@ function AskTreloView() {
     <div className="max-w-[1200px] mx-auto px-6 py-8 flex gap-6">
       <div className="flex-1">
         <div className="text-center mt-6 mb-8">
-          <h2 className="text-[26px] font-bold" style={{ color: c.primaryDeep }}>
+          <h2 className="text-[26px] font-bold" style={{ color: "#000" }}>
             How can I help you today?
           </h2>
           <p className="text-[12.5px] max-w-lg mx-auto mt-2" style={{ color: c.onSurfaceVariant }}>
@@ -718,7 +740,7 @@ function AskTreloView() {
             className="relative flex items-center rounded-2xl p-1.5 border"
             style={{ background: "#fff", borderColor: c.outline, boxShadow: "0 6px 24px rgba(0,0,0,.05)" }}
           >
-            <Sparkles size={18} style={{ color: c.primary, marginLeft: 12, marginRight: 8 }} />
+            <Sparkles size={18} style={{ color: "#000", marginLeft: 12, marginRight: 8 }} />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -727,7 +749,7 @@ function AskTreloView() {
             />
             <button
               className="px-4 py-2.5 rounded-xl text-white font-semibold text-[12px] flex items-center gap-1.5"
-              style={{ background: c.primary }}
+              style={{ background: "#000" }}
             >
               Search <ArrowRight size={13} />
             </button>
@@ -752,10 +774,13 @@ function AskTreloView() {
 
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[15px] font-semibold flex items-center gap-1.5" style={{ color: c.primaryDeep }}>
-              <History size={16} style={{ color: c.primary }} /> Recent Answers
+            <h3
+              className="text-[15px] font-semibold flex items-center gap-1.5"
+              style={{ color: "#000" }}
+            >
+              <History size={16} style={{ color: "#000" }} /> Recent Answers
             </h3>
-            <button className="text-[11px] font-semibold hover:underline" style={{ color: c.primary }}>
+            <button className="text-[11px] font-semibold hover:underline" style={{ color: "#000" }}>
               View All History
             </button>
           </div>
@@ -785,7 +810,7 @@ function AskTreloView() {
                 </p>
                 <div
                   className="mt-auto pt-2.5 border-t flex items-center gap-1.5 text-[10.5px]"
-                  style={{ borderColor: c.surfaceMid, color: c.primary }}
+                  style={{ borderColor: c.surfaceMid, color: "#000" }}
                 >
                   <LinkIcon size={11} />
                   <span>{a.channel}</span>
@@ -804,8 +829,8 @@ function AskTreloView() {
           style={{ background: "rgba(255,255,255,.75)", backdropFilter: "blur(8px)", borderColor: c.outline }}
         >
           <div className="flex items-center gap-1.5 mb-3">
-            <TrendingUp size={15} style={{ color: c.primary }} />
-            <h3 className="text-[13px] font-semibold" style={{ color: c.primaryDeep }}>
+            <TrendingUp size={15} style={{ color: "#000" }} />
+            <h3 className="text-[13px] font-semibold" style={{ color: "#000" }}>
               Trending Now
             </h3>
           </div>
@@ -831,7 +856,7 @@ function AskTreloView() {
           </div>
           <div
             className="mt-4 p-3 rounded-lg"
-            style={{ background: c.primaryContainer, color: c.onPrimaryContainer }}
+            style={{ background: c.primaryContainer, color: "#000" }}
           >
             <h4 className="text-[11.5px] font-semibold mb-1 flex items-center gap-1.5">
               <Lightbulb size={13} /> Power Tip
@@ -886,10 +911,9 @@ function CommitmentsView() {
 
   return (
     <div className="p-6 max-w-[1440px] mx-auto">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-[26px] font-bold" style={{ color: c.primaryDeep }}>
+          <h1 className="text-[26px] font-bold" style={{ color: "#000" }}>
             Commitments
           </h1>
           <p className="text-[12px] mt-0.5" style={{ color: c.onSurfaceVariant }}>
@@ -907,7 +931,7 @@ function CommitmentsView() {
               className="px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1.5"
               style={
                 mode === m
-                  ? { background: "#fff", color: c.primaryDeep, boxShadow: "0 1px 3px rgba(0,0,0,.08)" }
+                  ? { background: "#fff", color: "#000", boxShadow: "0 1px 3px rgba(0,0,0,.08)" }
                   : { color: c.onSurfaceVariant }
               }
             >
@@ -918,7 +942,6 @@ function CommitmentsView() {
         </div>
       </div>
 
-      {/* Overdue */}
       <section className="mb-6">
         <div className="flex items-center gap-2 mb-3" style={{ color: c.error }}>
           <AlertCircle size={15} />
@@ -937,24 +960,23 @@ function CommitmentsView() {
         </div>
       </section>
 
-      {/* Pending */}
       <section className="mb-6">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2" style={{ color: c.primaryDeep }}>
-            <ClipboardCheck size={15} style={{ color: c.primary }} />
+          <div className="flex items-center gap-2" style={{ color: "#000" }}>
+            <ClipboardCheck size={15} style={{ color: "#000" }} />
             <h2 className="text-[11px] font-bold uppercase tracking-widest">Pending Commitments</h2>
             <span
               className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-              style={{ background: c.primaryContainer, color: c.onPrimaryContainer }}
+              style={{ background: c.primaryContainer, color: "#000" }}
             >
               {todo.length}
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <button className="p-1.5 rounded-md hover:bg-[#ebe7e8]" style={{ color: c.onSurfaceVariant }}>
+            <button className="p-1.5 rounded-md hover:bg-[#ebe7e8]" style={{ color: "#000" }}>
               <Filter size={13} />
             </button>
-            <button className="p-1.5 rounded-md hover:bg-[#ebe7e8]" style={{ color: c.onSurfaceVariant }}>
+            <button className="p-1.5 rounded-md hover:bg-[#ebe7e8]" style={{ color: "#000" }}>
               <ArrowUpDown size={13} />
             </button>
           </div>
@@ -966,16 +988,18 @@ function CommitmentsView() {
         </div>
       </section>
 
-      {/* Done */}
       <section>
         <button
           onClick={() => setShowDone((s) => !s)}
           className="flex items-center gap-2 mb-3 hover:opacity-80"
-          style={{ color: c.onSurfaceVariant }}
+          style={{ color: "#000" }}
         >
           <ChevronDown
             size={15}
-            style={{ transform: showDone ? "rotate(0)" : "rotate(-90deg)", transition: "transform .15s" }}
+            style={{
+              transform: showDone ? "rotate(0)" : "rotate(-90deg)",
+              transition: "transform .15s",
+            }}
           />
           <h2 className="text-[11px] font-bold uppercase tracking-widest">
             Completed Tasks ({done.length})
@@ -1049,7 +1073,7 @@ function OverdueCard({ item }: { item: Commitment }) {
         </div>
         <button
           className="w-6 h-6 rounded-full grid place-items-center hover:bg-[#ebe7e8] border"
-          style={{ borderColor: c.outline, color: c.onSurfaceVariant }}
+          style={{ borderColor: c.outline, color: "#000" }}
         >
           <MoreHorizontal size={13} />
         </button>
@@ -1070,7 +1094,7 @@ function TaskRow({ item, onToggle }: { item: Commitment; onToggle: () => void })
           onClick={onToggle}
           className="w-5 h-5 rounded border-2 grid place-items-center shrink-0"
           style={{
-            borderColor: done ? c.secondary : c.outline,
+            borderColor: done ? c.secondary : "#000",
             background: done ? c.secondary : "transparent",
           }}
         >
@@ -1127,10 +1151,7 @@ function TaskRow({ item, onToggle }: { item: Commitment; onToggle: () => void })
           >
             {done ? "Done" : "To Do"}
           </span>
-          <button
-            className="p-1 rounded hover:bg-[#f1edee]"
-            style={{ color: c.onSurfaceVariant }}
-          >
+          <button className="p-1 rounded hover:bg-[#f1edee]" style={{ color: "#000" }}>
             <ExternalLink size={13} />
           </button>
         </div>
@@ -1146,7 +1167,7 @@ function Avatar({ initials, size = 24 }: { initials: string; size?: number }) {
       style={{
         width: size,
         height: size,
-        background: c.primary,
+        background: "#000",
         fontSize: Math.round(size * 0.38),
       }}
     >
@@ -1155,16 +1176,265 @@ function Avatar({ initials, size = 24 }: { initials: string; size?: number }) {
   );
 }
 
-/* ---------- Placeholder for Digest / Analytics ---------- */
-function DigestPlaceholder({ title }: { title: string }) {
+/* ---------- Activity Digest view ---------- */
+
+type DigestEntry = {
+  id: string;
+  chip: string;
+  chipBg: string;
+  chipFg: string;
+  time: string;
+  title: string;
+  bullets: string[];
+  participants: { initials: string; bg: string }[];
+  extra?: number;
+  participantsLabel: string;
+  accent?: "primary" | "error";
+};
+
+const digestSeed: DigestEntry[] = [
+  {
+    id: "d1",
+    chip: "#product-design",
+    chipBg: "#c8f5dd",
+    chipFg: "#00522f",
+    time: "Today at 10:24 AM",
+    title: "UI/UX Audit Feedback",
+    bullets: [
+      "The team agreed to migrate the design system from Material 2 to Material 3 tokens.",
+      "Sarah pointed out consistency issues in the mobile navigation bar layout.",
+      "Final decision: Design freeze on Friday to prepare for the v2.4 sprint.",
+    ],
+    participants: [
+      { initials: "SC", bg: "#4a154b" },
+      { initials: "JM", bg: "#006c46" },
+      { initials: "RP", bg: "#5d4200" },
+    ],
+    extra: 5,
+    participantsLabel: "8 participants active in this thread",
+    accent: "primary",
+  },
+  {
+    id: "d2",
+    chip: "#engineering-sync",
+    chipBg: "#ececec",
+    chipFg: "#000",
+    time: "Today at 8:45 AM",
+    title: "Database Migration Update",
+    bullets: [
+      "Primary migration finished successfully without downtime.",
+      "Indexing issues discovered in the activity_log table were resolved by Marcus.",
+      "Query performance improved by 40% across the main dashboard components.",
+    ],
+    participants: [
+      { initials: "MK", bg: "#000" },
+      { initials: "AL", bg: "#4a154b" },
+    ],
+    participantsLabel: "4 engineers discussing performance",
+    accent: "primary",
+  },
+  {
+    id: "d3",
+    chip: "#incident-room",
+    chipBg: "#ffdad6",
+    chipFg: "#93000a",
+    time: "Yesterday at 11:15 PM",
+    title: "Latency Spike in API v2",
+    bullets: [
+      "Reported latency of >2s for all authenticated requests.",
+      "Root cause: API rate limiter misconfiguration during deployment.",
+      "Resolution: Config rolled back to stable within 12 minutes.",
+    ],
+    participants: [{ initials: "DR", bg: "#ba1a1a" }],
+    participantsLabel: "Emergency thread with 12 participants",
+    accent: "error",
+  },
+];
+
+function ActivityDigestView() {
+  const [range, setRange] = useState<"today" | "yesterday" | "week">("today");
+  const [channel, setChannel] = useState("all");
+
   return (
-    <div className="p-6 max-w-[1440px] mx-auto">
-      <h1 className="text-[22px] font-bold mb-1" style={{ color: c.primaryDeep }}>
-        {title}
-      </h1>
-      <p className="text-[12px]" style={{ color: c.onSurfaceVariant }}>
-        Coming soon.
-      </p>
+    <div className="p-6 max-w-[1200px] mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-[26px] font-bold" style={{ color: "#000" }}>
+          Activity Digest
+        </h2>
+        <p className="text-[12.5px] mt-1" style={{ color: c.onSurfaceVariant }}>
+          Intelligent summary of team coordination and Slack threads from the last 24 hours.
+        </p>
+      </div>
+
+      {/* Filters bar */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 mb-6 p-2 rounded-xl border"
+        style={{ background: "#fff", borderColor: c.outline, boxShadow: "0 1px 2px rgba(0,0,0,.03)" }}
+      >
+        <div className="flex items-center gap-1">
+          {[
+            { id: "today", label: "Today" },
+            { id: "yesterday", label: "Yesterday" },
+            { id: "week", label: "Last 7 Days" },
+          ].map((r) => (
+            <button
+              key={r.id}
+              onClick={() => setRange(r.id as typeof range)}
+              className="px-3.5 py-1.5 rounded-lg text-[11.5px] font-semibold transition-colors"
+              style={
+                range === r.id
+                  ? { background: "#000", color: "#fff" }
+                  : { color: c.onSurfaceVariant }
+              }
+              onMouseEnter={(e) => {
+                if (range !== r.id) e.currentTarget.style.background = c.surfaceHigh;
+              }}
+              onMouseLeave={(e) => {
+                if (range !== r.id) e.currentTarget.style.background = "transparent";
+              }}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative">
+          <select
+            value={channel}
+            onChange={(e) => setChannel(e.target.value)}
+            className="appearance-none rounded-lg pl-3 pr-8 py-1.5 text-[11.5px] border outline-none"
+            style={{ background: c.surfaceLow, borderColor: c.outline, color: "#000" }}
+          >
+            <option value="all">All Channels</option>
+            <option value="pd">#product-design</option>
+            <option value="es">#engineering-sync</option>
+            <option value="mo">#marketing-ops</option>
+          </select>
+          <ChevronDown
+            size={13}
+            className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ color: "#000" }}
+          />
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="relative pl-6">
+        <div
+          className="absolute left-2 top-2 bottom-2 w-px"
+          style={{ background: c.outline }}
+        />
+        <div className="space-y-5">
+          {digestSeed.map((e) => (
+            <DigestCard key={e.id} entry={e} />
+          ))}
+        </div>
+      </div>
+
+      {/* FAB */}
+      <button
+        className="fixed bottom-8 right-8 w-12 h-12 rounded-full text-white grid place-items-center hover:scale-105 active:scale-95 transition-transform z-40"
+        style={{ background: "#000", boxShadow: "0 8px 24px rgba(0,0,0,.25)" }}
+        title="New digest entry"
+      >
+        <FileText size={18} />
+      </button>
+    </div>
+  );
+}
+
+function DigestCard({ entry }: { entry: DigestEntry }) {
+  const accentColor = entry.accent === "error" ? c.error : "#000";
+  return (
+    <div className="relative">
+      {/* timeline dot */}
+      <div
+        className="absolute -left-[18px] top-4 w-2.5 h-2.5 rounded-full ring-4"
+        style={{ background: accentColor, boxShadow: `0 0 0 3px ${c.bg}` }}
+      />
+      <div
+        className="rounded-xl p-4 border"
+        style={{
+          background: "rgba(255,255,255,.85)",
+          backdropFilter: "blur(6px)",
+          borderColor: c.outline,
+          borderLeft: entry.accent === "error" ? `4px solid ${c.error}` : `1px solid ${c.outline}`,
+          boxShadow: "0 2px 8px rgba(0,0,0,.04)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <span
+              className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold"
+              style={{ background: entry.chipBg, color: entry.chipFg }}
+            >
+              {entry.chip}
+            </span>
+            <span className="text-[10.5px]" style={{ color: c.onSurfaceVariant }}>
+              {entry.time}
+            </span>
+          </div>
+          <button
+            className="text-[11px] font-semibold flex items-center gap-1 hover:underline"
+            style={{ color: "#000" }}
+          >
+            View in Slack <ExternalLink size={11} />
+          </button>
+        </div>
+
+        <h4 className="text-[14px] font-bold mb-2 flex items-center gap-1.5" style={{ color: "#000" }}>
+          {entry.accent === "error" ? (
+            <AlertCircle size={14} style={{ color: c.error }} />
+          ) : (
+            <Sparkles size={14} style={{ color: "#000" }} />
+          )}
+          {entry.title}
+        </h4>
+
+        <ul className="space-y-1.5 mb-4 pl-1">
+          {entry.bullets.map((b, i) => (
+            <li
+              key={i}
+              className="text-[12px] leading-relaxed flex gap-2"
+              style={{ color: c.onSurface }}
+            >
+              <span
+                className="mt-1.5 w-1 h-1 rounded-full shrink-0"
+                style={{ background: accentColor }}
+              />
+              <span>{b}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div
+          className="flex items-center gap-3 pt-3 border-t"
+          style={{ borderColor: c.surfaceMid }}
+        >
+          <div className="flex -space-x-2">
+            {entry.participants.map((p, i) => (
+              <div
+                key={i}
+                className="w-6 h-6 rounded-full grid place-items-center text-[8.5px] font-bold text-white ring-2 ring-white"
+                style={{ background: p.bg }}
+              >
+                {p.initials}
+              </div>
+            ))}
+            {entry.extra && (
+              <div
+                className="w-6 h-6 rounded-full grid place-items-center text-[8.5px] font-bold ring-2 ring-white"
+                style={{ background: c.surfaceHigh, color: c.onSurfaceVariant }}
+              >
+                +{entry.extra}
+              </div>
+            )}
+          </div>
+          <span className="text-[10.5px]" style={{ color: c.onSurfaceVariant }}>
+            {entry.participantsLabel}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
