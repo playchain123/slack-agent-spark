@@ -42,6 +42,11 @@ import {
   FileText,
 } from "lucide-react";
 
+export const workspaceQuery = queryOptions({
+  queryKey: ["workspace"],
+  queryFn: () => getMyWorkspace(),
+});
+
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
@@ -53,8 +58,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       },
     ],
   }),
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(workspaceQuery);
+  },
   component: Dashboard,
 });
+
 
 /* ---------- Design tokens ---------- */
 const c = {
