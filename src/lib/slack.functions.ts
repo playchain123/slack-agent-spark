@@ -1,10 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
+  createPublicInstallState,
   createInstallState,
   getSlackEnv,
   buildSlackInstallUrl,
 } from "@/lib/slack.server";
+
+const SLACK_REDIRECT_ORIGIN = "https://slack-agent-spark.lovable.app";
+
+export const getPublicSlackInstallUrl = createServerFn({ method: "POST" }).handler(async () => {
+  const { clientId, stateSecret } = getSlackEnv();
+  const state = createPublicInstallState(stateSecret);
+  const redirectUri = `${process.env.PUBLIC_ORIGIN ?? SLACK_REDIRECT_ORIGIN}/api/public/slack/oauth/callback`;
+  return { url: buildSlackInstallUrl(clientId, state, redirectUri) };
+});
 
 export const getSlackInstallUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -22,7 +32,7 @@ export const getSlackInstallUrl = createServerFn({ method: "POST" })
 
     const { clientId, stateSecret } = getSlackEnv();
     const state = createInstallState(member.workspace_id, stateSecret);
-    const redirectUri = `${process.env.PUBLIC_ORIGIN ?? "https://slack-agent-spark.lovable.app"}/api/public/slack/oauth/callback`;
+    const redirectUri = `${process.env.PUBLIC_ORIGIN ?? SLACK_REDIRECT_ORIGIN}/api/public/slack/oauth/callback`;
     return { url: buildSlackInstallUrl(clientId, state, redirectUri) };
   });
 
