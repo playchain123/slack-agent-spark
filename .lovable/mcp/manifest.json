@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://uzksrrruxbyyvtmbnsig.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "trelo-mcp",
+      "version": "0.1.0",
+      "title": "Trelo"
+    },
+    "tools": [
+      {
+        "name": "ask_trelo",
+        "title": "Ask Trelo",
+        "description": "Answer a question using the signed-in user's Slack workspace history indexed in Trelo. Returns an AI answer with citations.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 2000,
+              "description": "The question to answer from Slack context."
+            }
+          },
+          "required": [
+            "question"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_commitments",
+        "title": "List commitments",
+        "description": "List commitments (auto-extracted tasks) for the signed-in user's Trelo workspace.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "default": "open",
+              "description": "Filter by status.",
+              "type": "string",
+              "enum": [
+                "open",
+                "done",
+                "all"
+              ]
+            },
+            "limit": {
+              "default": 50,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "toggle_commitment",
+        "title": "Toggle commitment",
+        "description": "Mark a commitment as done or reopen it.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Commitment UUID."
+            },
+            "done": {
+              "type": "boolean",
+              "description": "true to mark done, false to reopen."
+            }
+          },
+          "required": [
+            "id",
+            "done"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_digest",
+        "title": "Get activity digest",
+        "description": "Return the most recent Trelo activity digest events (AI summaries of Slack channels).",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 10,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_channels",
+        "title": "List channels",
+        "description": "List Slack channels indexed in the signed-in user's Trelo workspace.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
