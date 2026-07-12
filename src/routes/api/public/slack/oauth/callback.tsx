@@ -49,7 +49,6 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
             ok: boolean;
             error?: string;
             team?: { id?: string; name?: string };
-            authed_user?: { id?: string };
             bot_user_id?: string;
             access_token?: string;
             scope?: string;
