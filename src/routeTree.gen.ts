@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthSlackCompleteRouteImport } from './routes/auth.slack.complete'
 import { Route as ApiPublicSlackEventsRouteImport } from './routes/api/public/slack/events'
 import { Route as ApiPublicSlackOauthCallbackRouteImport } from './routes/api/public/slack/oauth/callback'
 
@@ -35,6 +36,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthSlackCompleteRoute = AuthSlackCompleteRouteImport.update({
+  id: '/slack/complete',
+  path: '/slack/complete',
+  getParentRoute: () => AuthRoute,
+} as any)
 const ApiPublicSlackEventsRoute = ApiPublicSlackEventsRouteImport.update({
   id: '/api/public/slack/events',
   path: '/api/public/slack/events',
@@ -49,15 +55,17 @@ const ApiPublicSlackOauthCallbackRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/auth/slack/complete': typeof AuthSlackCompleteRoute
   '/api/public/slack/events': typeof ApiPublicSlackEventsRoute
   '/api/public/slack/oauth/callback': typeof ApiPublicSlackOauthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/auth/slack/complete': typeof AuthSlackCompleteRoute
   '/api/public/slack/events': typeof ApiPublicSlackEventsRoute
   '/api/public/slack/oauth/callback': typeof ApiPublicSlackOauthCallbackRoute
 }
@@ -65,8 +73,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/auth/slack/complete': typeof AuthSlackCompleteRoute
   '/api/public/slack/events': typeof ApiPublicSlackEventsRoute
   '/api/public/slack/oauth/callback': typeof ApiPublicSlackOauthCallbackRoute
 }
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/auth/slack/complete'
     | '/api/public/slack/events'
     | '/api/public/slack/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -83,6 +93,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/auth/slack/complete'
     | '/api/public/slack/events'
     | '/api/public/slack/oauth/callback'
   id:
@@ -91,6 +102,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/auth/slack/complete'
     | '/api/public/slack/events'
     | '/api/public/slack/oauth/callback'
   fileRoutesById: FileRoutesById
@@ -98,7 +110,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   ApiPublicSlackEventsRoute: typeof ApiPublicSlackEventsRoute
   ApiPublicSlackOauthCallbackRoute: typeof ApiPublicSlackOauthCallbackRoute
 }
@@ -133,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/auth/slack/complete': {
+      id: '/auth/slack/complete'
+      path: '/slack/complete'
+      fullPath: '/auth/slack/complete'
+      preLoaderRoute: typeof AuthSlackCompleteRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/api/public/slack/events': {
       id: '/api/public/slack/events'
       path: '/api/public/slack/events'
@@ -161,23 +180,23 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthSlackCompleteRoute: typeof AuthSlackCompleteRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthSlackCompleteRoute: AuthSlackCompleteRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   ApiPublicSlackEventsRoute: ApiPublicSlackEventsRoute,
   ApiPublicSlackOauthCallbackRoute: ApiPublicSlackOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import handPhone from "@/assets/hand-phone.png";
+import { getPublicSlackInstallUrl } from "@/lib/slack.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -48,12 +51,7 @@ function Index() {
             <Link to="/dashboard" className="text-[12px] font-medium text-black hover:opacity-70">
               Log in
             </Link>
-            <Link
-              to="/dashboard"
-              className="rounded-md bg-black px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:bg-neutral-800"
-            >
-              Continue with Slack
-            </Link>
+            <ContinueWithSlackButton variant="nav" />
           </div>
         </div>
       </header>
@@ -118,13 +116,7 @@ function Index() {
               transition={{ duration: 0.8, delay: 0.45 }}
               className="mt-4"
             >
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center gap-3 rounded-md border border-[#dfe1e6] bg-white px-5 py-3 text-[15px] font-semibold text-black shadow-sm transition hover:bg-[#f4f5f7]"
-              >
-                <SlackLogo small />
-                Continue with Slack
-              </Link>
+              <ContinueWithSlackButton variant="hero" />
             </motion.div>
             <p className="mt-3 text-[13px] text-[#6b778c]">
               Sign in or create your Trelo account with your Slack workspace.
@@ -147,6 +139,48 @@ function Index() {
       <CTASection />
       <Footer />
     </div>
+  );
+}
+
+function ContinueWithSlackButton({ variant }: { variant: "nav" | "hero" }) {
+  const getInstallUrl = useServerFn(getPublicSlackInstallUrl);
+  const [loading, setLoading] = useState(false);
+
+  async function onClick() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const { url } = await getInstallUrl();
+      window.location.href = url;
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
+  }
+
+  if (variant === "nav") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={loading}
+        className="rounded-md bg-black px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:bg-neutral-800 disabled:cursor-wait disabled:opacity-70"
+      >
+        {loading ? "Opening Slack…" : "Continue with Slack"}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      className="inline-flex items-center gap-3 rounded-md border border-[#dfe1e6] bg-white px-5 py-3 text-[15px] font-semibold text-black shadow-sm transition hover:bg-[#f4f5f7] disabled:cursor-wait disabled:opacity-70"
+    >
+      <SlackLogo small />
+      {loading ? "Opening Slack…" : "Continue with Slack"}
+    </button>
   );
 }
 

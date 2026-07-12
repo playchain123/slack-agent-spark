@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getPublicSlackInstallUrl } from "@/lib/slack.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -17,12 +19,14 @@ type Mode = "signin" | "signup";
 
 function AuthPage() {
   const navigate = useNavigate();
+  const getSlackInstallUrl = useServerFn(getPublicSlackInstallUrl);
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [slackLoading, setSlackLoading] = useState(false);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -56,6 +60,18 @@ function AuthPage() {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function onSlackConnect() {
+    setError(null);
+    setSlackLoading(true);
+    try {
+      const { url } = await getSlackInstallUrl();
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not open Slack");
+      setSlackLoading(false);
     }
   }
 
@@ -150,9 +166,15 @@ function AuthPage() {
           </div>
         </div>
 
-        <p className="text-center text-[11px] mt-4" style={{ color: "#8a7a8a" }}>
-          Sign in with Slack coming next — once you paste your Slack app credentials.
-        </p>
+        <button
+          type="button"
+          onClick={onSlackConnect}
+          disabled={slackLoading}
+          className="mt-4 h-10 w-full rounded-md border bg-white text-[12.5px] font-semibold disabled:cursor-wait disabled:opacity-70"
+          style={{ borderColor: "#e3dde0", color: "#1a0b1a" }}
+        >
+          {slackLoading ? "Opening Slack…" : "Continue with Slack"}
+        </button>
       </div>
     </div>
   );
