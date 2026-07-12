@@ -216,6 +216,45 @@ export const listRecentAnswers = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+// Slack Real-Time Search API (assistant.search.context) — official Slack AI capability
+async function slackRealtimeSearch(
+  botToken: string,
+  query: string,
+): Promise<Array<{ channel_name?: string; user_name?: string; text: string; permalink?: string }>> {
+  try {
+    const res = await fetch("https://slack.com/api/assistant.search.context", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${botToken}`,
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify({
+        query,
+        content_types: ["messages"],
+        include_context_messages: true,
+        limit: 15,
+      }),
+    });
+    const data = (await res.json()) as any;
+    if (!data.ok) {
+      console.warn("assistant.search.context not ok:", data.error);
+      return [];
+    }
+    const results = data?.results?.messages ?? data?.messages ?? [];
+    return results
+      .map((m: any) => ({
+        channel_name: m.channel?.name ?? m.channel_name,
+        user_name: m.author_user_name ?? m.user_name ?? m.username,
+        text: m.message_content?.text ?? m.text ?? "",
+        permalink: m.permalink,
+      }))
+      .filter((r: any) => r.text);
+  } catch (err) {
+    console.warn("assistant.search.context failed:", err);
+    return [];
+  }
+}
+
 export const askTrelo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ question: z.string().min(2).max(2000) }).parse(d))
@@ -224,11 +263,21 @@ export const askTrelo = createServerFn({ method: "POST" })
     const w = await getCallerWorkspace(supabase, userId);
     if (!w) throw new Error("No workspace");
 
-    // Simple keyword retrieval over recent messages
     const q = data.question;
-    let messages: any[] = [];
-    const terms = q.split(/\s+/).filter((t) => t.length > 3).slice(0, 5);
 
+    // 1. Slack Real-Time Search API — live Slack results (semantic on AI-enabled workspaces)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: install } = await supabaseAdmin
+      .from("slack_installations")
+      .select("bot_token")
+      .eq("workspace_id", w.workspaceId)
+      .maybeSingle();
+    const botToken = (install?.bot_token as string | undefined) ?? null;
+    const liveHits = botToken ? await slackRealtimeSearch(botToken, q) : [];
+
+    // 2. Indexed DB retrieval as augmentation / fallback
+    let indexed: any[] = [];
+    const terms = q.split(/\s+/).filter((t) => t.length > 3).slice(0, 5);
     if (terms.length > 0) {
       const orExpr = terms.map((t) => `text.ilike.%${t.replace(/[%,]/g, "")}%`).join(",");
       const { data: hits } = await supabase
@@ -237,23 +286,17 @@ export const askTrelo = createServerFn({ method: "POST" })
         .eq("workspace_id", w.workspaceId)
         .or(orExpr)
         .order("created_at", { ascending: false })
-        .limit(20);
-      messages = hits ?? [];
+        .limit(15);
+      indexed = hits ?? [];
     }
-    if (messages.length === 0) {
+    if (indexed.length === 0 && liveHits.length === 0) {
       const { data: recent } = await supabase
         .from("slack_messages")
         .select("slack_channel_id, slack_user_name, text, ts, permalink, created_at")
         .eq("workspace_id", w.workspaceId)
         .order("created_at", { ascending: false })
-        .limit(40);
-      messages = recent ?? [];
-    }
-
-    if (messages.length === 0) {
-      const emptyAnswer =
-        "I don't have any Slack messages indexed yet for your workspace. Once your team posts in Slack, I'll be able to answer questions about it.";
-      return { answer: emptyAnswer, sources: [] };
+        .limit(30);
+      indexed = recent ?? [];
     }
 
     const { data: channels } = await supabase
@@ -262,29 +305,50 @@ export const askTrelo = createServerFn({ method: "POST" })
       .eq("workspace_id", w.workspaceId);
     const chanMap = new Map((channels ?? []).map((c: any) => [c.slack_channel_id, c.name]));
 
-    const contextBlock = messages
-      .slice(0, 25)
-      .map(
-        (m: any, i: number) =>
-          `[${i + 1}] #${chanMap.get(m.slack_channel_id) ?? "channel"} — ${m.slack_user_name ?? "user"}: ${m.text}`,
-      )
+    const merged = [
+      ...liveHits.map((h) => ({
+        channel: h.channel_name ?? "channel",
+        user: h.user_name ?? "user",
+        text: h.text,
+        permalink: h.permalink ?? null,
+        source: "slack_realtime" as const,
+      })),
+      ...indexed.map((m: any) => ({
+        channel: chanMap.get(m.slack_channel_id) ?? "channel",
+        user: m.slack_user_name ?? "user",
+        text: m.text,
+        permalink: m.permalink,
+        source: "indexed" as const,
+      })),
+    ].slice(0, 25);
+
+    if (merged.length === 0) {
+      return {
+        answer:
+          "I don't have any Slack messages to search yet. Once your team posts in Slack (or reconnects with search scopes), I'll be able to answer.",
+        sources: [],
+      };
+    }
+
+    const contextBlock = merged
+      .map((m, i) => `[${i + 1}] #${m.channel} — ${m.user}: ${m.text}`)
       .join("\n");
 
     const { aiText } = await import("./ai.server");
     const answer = await aiText(
-      "You are Trelo, an AI assistant that answers questions about a team's Slack conversations. Use only the provided messages. Cite sources with [n] where n is the message number. If the messages don't contain an answer, say so honestly.",
+      "You are Trelo, an AI assistant that answers questions strictly from the team's Slack messages provided. Cite sources inline with [n]. If the messages don't contain the answer, say so honestly — do not invent facts.",
       `Question: ${data.question}\n\nSlack messages:\n${contextBlock}`,
     );
 
-    const sources = messages.slice(0, 25).map((m: any, i: number) => ({
+    const sources = merged.map((m, i) => ({
       index: i + 1,
-      channel: chanMap.get(m.slack_channel_id) ?? null,
-      user: m.slack_user_name,
+      channel: m.channel,
+      user: m.user,
       text: m.text?.slice(0, 200),
       permalink: m.permalink,
+      source: m.source,
     }));
 
-    // Persist
     await supabase.from("answers").insert({
       workspace_id: w.workspaceId,
       asked_by: userId,
@@ -293,7 +357,7 @@ export const askTrelo = createServerFn({ method: "POST" })
       sources,
     });
 
-    return { answer, sources };
+    return { answer, sources, usedRealtimeSearch: liveHits.length > 0 };
   });
 
 // ---------- SEARCH ----------
