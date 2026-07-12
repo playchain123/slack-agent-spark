@@ -224,20 +224,10 @@ export const askTrelo = createServerFn({ method: "POST" })
     const w = await getCallerWorkspace(supabase, userId);
     if (!w) throw new Error("No workspace");
 
-    // Retrieve context: trigram-similar messages (fallback to recent if no match)
+    // Simple keyword retrieval over recent messages
     const q = data.question;
     let messages: any[] = [];
-    const { data: simRows } = await supabase.rpc("similarity", { text: q, text: q }).limit(1); // may not exist; fallback
-    void simRows;
-
-    // Use ilike as a simple retrieval fallback
     const terms = q.split(/\s+/).filter((t) => t.length > 3).slice(0, 5);
-    let query = supabase
-      .from("slack_messages")
-      .select("slack_channel_id, slack_user_name, text, ts, permalink, created_at")
-      .eq("workspace_id", w.workspaceId)
-      .order("created_at", { ascending: false })
-      .limit(40);
 
     if (terms.length > 0) {
       const orExpr = terms.map((t) => `text.ilike.%${t.replace(/[%,]/g, "")}%`).join(",");
