@@ -241,7 +241,12 @@ export const askTrelo = createServerFn({ method: "POST" })
       messages = hits ?? [];
     }
     if (messages.length === 0) {
-      const { data: recent } = await query;
+      const { data: recent } = await supabase
+        .from("slack_messages")
+        .select("slack_channel_id, slack_user_name, text, ts, permalink, created_at")
+        .eq("workspace_id", w.workspaceId)
+        .order("created_at", { ascending: false })
+        .limit(40);
       messages = recent ?? [];
     }
 
