@@ -48,12 +48,12 @@ function Index() {
             <Link to="/dashboard" className="text-[12px] font-medium text-black hover:opacity-70">
               Log in
             </Link>
-            <button
-              type="button"
+            <Link
+              to="/dashboard"
               className="rounded-md bg-black px-3 py-1.5 text-[12px] font-medium text-white shadow-sm transition hover:bg-neutral-800"
             >
               Continue with Slack
-            </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -112,16 +112,20 @@ function Index() {
 
             </motion.form>
 
-            <motion.button
+            <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.45 }}
-              type="button"
-              className="mt-4 inline-flex items-center gap-3 rounded-md border border-[#dfe1e6] bg-white px-5 py-3 text-[15px] font-semibold text-black shadow-sm transition hover:bg-[#f4f5f7]"
+              className="mt-4"
             >
-              <SlackLogo small />
-              Continue with Slack
-            </motion.button>
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center gap-3 rounded-md border border-[#dfe1e6] bg-white px-5 py-3 text-[15px] font-semibold text-black shadow-sm transition hover:bg-[#f4f5f7]"
+              >
+                <SlackLogo small />
+                Continue with Slack
+              </Link>
+            </motion.div>
             <p className="mt-3 text-[13px] text-[#6b778c]">
               Sign in or create your Trelo account with your Slack workspace.
             </p>
