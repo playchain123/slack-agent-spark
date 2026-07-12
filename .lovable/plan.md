@@ -1,118 +1,75 @@
 
-# Trelo — Real backend + Slack integration
+# Trelo Dashboard — Full Functionality Plan
 
-Big picture: turn the current mock dashboard into a real multi-tenant Slack product. Users sign in, connect their Slack workspace once, and every panel (Ask Trelo, Commitments, Activity Digest) reads/writes real data.
-
----
-
-## Part A — What you need on Slack (walkthrough)
-
-You already have a Slack developer account. Here's exactly what to configure. I'll generate the manifest with the correct URLs after Cloud is enabled so you can paste it in.
-
-### 1. Create the Slack app
-- api.slack.com/apps → **Create New App → From an app manifest** → pick your dev workspace → paste the manifest I'll generate.
-
-### 2. Manifest will include:
-- **Bot scopes**: `app_mentions:read`, `chat:write`, `channels:history`, `channels:read`, `groups:history`, `groups:read`, `im:history`, `im:read`, `im:write`, `users:read`, `users:read.email`, `reactions:read`, `assistant:write`, `search:read.public`
-- **User scopes** (for Sign in with Slack): `openid`, `email`, `profile`
-- **Event subscriptions** → Request URL: `https://slack-agent-spark.lovable.app/api/public/slack/events`
-  - Bot events: `app_mention`, `message.channels`, `message.groups`, `message.im`, `assistant_thread_started`
-- **Interactivity** → Request URL: same `/api/public/slack/events`
-- **OAuth redirect URL**: `https://slack-agent-spark.lovable.app/api/public/slack/oauth/callback`
-- **App-level tokens**: not needed (we use HTTP events, not Socket Mode)
-- **Distribution**: enable **Public Distribution** so any workspace can install (multi-tenant).
-
-### 3. Secrets you paste into Lovable
-Once the app is created, I'll open the secure secret form for:
-- `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` (Basic Info → App Credentials)
-- `SLACK_SIGNING_SECRET` (Basic Info → App Credentials — used to verify events)
-- `SLACK_STATE_SECRET` (I'll auto-generate — signs the OAuth state param)
-
-### 4. How teams connect
-On the dashboard, "Connect Slack" → OAuth v2 install flow → callback stores their `bot_token` + `team_id` + `bot_user_id` in `slack_installations` table, scoped to the signed-in user's `workspace_id`. From that point on, events for their team flow into `/api/public/slack/events` and Trelo can call Slack APIs as their bot.
+Goal: every screen shows **real data from your Slack workspace** (no mocks), the AI works, and every button does something.
 
 ---
 
-## Part B — What I'll build in Lovable
+## 1. Logout (quick win)
+- Add a **Log out** button in the sidebar footer + a user menu with avatar in the TopBar.
+- Wire to existing `useLogout()` (already in the codebase).
 
-### B1. Enable Lovable Cloud
-Provisions Postgres, Auth, and secret storage.
+## 2. Ask Trelo — real AI chat over your Slack data
+- New route `/_authenticated/ask` (or keep view-switch, but persistent).
+- Chat UI: input box + streaming responses + message history.
+- Server function `askTrelo` that:
+  1. Takes the user's question.
+  2. Retrieves the most relevant recent `slack_messages` for the workspace (keyword + trigram similarity — `pg_trgm` is already installed).
+  3. Feeds them as context to **Lovable AI** (`google/gemini-3-flash-preview`).
+  4. Streams the answer back with citations (channel + timestamp link to Slack).
+- Persist Q&A in existing `answers` table.
 
-### B2. Auth
-- Email + password (default).
-- **Sign in with Slack** via `supabase--configure_social_auth` (uses your same Slack app's OpenID scopes).
-- Managed `_authenticated/` route gate; move `dashboard` under `src/routes/_authenticated/dashboard.tsx`.
-- Public `/auth` page with tabs (Sign in / Sign up / Continue with Slack).
-- Root `onAuthStateChange` → router.invalidate.
-- Logout button in the sidebar footer with proper hygiene (cancelQueries → clear → signOut → replace to `/auth`).
+## 3. Commitments — auto-extracted action items
+- Background: when a new `slack_messages` row is inserted (already happening via events), run an AI extraction pass to detect commitments ("I'll send the doc by Friday", "@sam can you review…") and insert into `commitments` table.
+- UI: real list from `commitments` table, checkbox to mark done, filter by mine/all/open/done, links back to source Slack thread.
+- Server functions: `listCommitments`, `toggleCommitment`, `extractCommitmentsFromMessage`.
 
-### B3. Database (migration with GRANTs + RLS)
-- `workspaces` (id, name, owner_id) — one per user account initially, extendable to teams later
-- `workspace_members` (workspace_id, user_id, role)
-- `slack_installations` (workspace_id, slack_team_id, team_name, bot_token, bot_user_id, authed_user_id, installed_at)
-- `slack_threads` (id, workspace_id, channel_id, channel_name, thread_ts, permalink, last_indexed_at, message_count)
-- `slack_messages` (id, thread_id, slack_user_id, slack_user_name, text, ts, embedding vector(1536) *if pgvector, else skip for v1*)
-- `answers` (id, workspace_id, asked_by, question, answer_md, sources jsonb, created_at) — Ask Trelo history
-- `commitments` (id, workspace_id, title, owner_slack_id, owner_name, due_date, source_thread_id, status ['pending'|'done'|'snoozed'], channel_name, created_at, completed_at)
-- `digest_events` (id, workspace_id, channel_id, channel_name, event_type ['decision'|'question'|'commitment'|'update'], summary, thread_permalink, occurred_at)
-- All tables: RLS scoped to `workspace_members`; explicit GRANTs to `authenticated` + `service_role`; `bot_token` never selectable by anon.
+## 4. Activity Digest — daily rollup
+- Server function `getTodayDigest` that:
+  - Reads today's `slack_messages` grouped by channel.
+  - Uses Lovable AI to summarize into 3–6 bullets per channel + surface top decisions/blockers.
+  - Caches result in `digest_events` for the day.
+- UI: date picker, channel filter, "Regenerate" button.
 
-### B4. Server routes & functions
+## 5. Dashboard home — real metrics
+- Replace welcome placeholder with live tiles:
+  - Messages indexed (24h / 7d)
+  - Open commitments count
+  - Top active channels
+  - Latest digest preview + jump link
+- All from real Supabase queries via server fns.
 
-**Public routes (no auth) — external callers:**
-- `POST /api/public/slack/oauth/callback` — Slack OAuth v2 exchange; verifies signed state; upserts `slack_installations`.
-- `GET /api/public/slack/install` — kicks off OAuth (redirects to slack.com/oauth/v2/authorize with signed state).
-- `POST /api/public/slack/events` — verifies Slack signing secret + timestamp (5-min window, timing-safe compare), responds to `url_verification`, then dispatches:
-  - `message.*` / `app_mention` → enqueue ingestion
-  - `assistant_thread_started` → prime assistant thread
-  - interactivity payloads → handle button clicks (mark commitment done, snooze)
+## 6. Search (TopBar)
+- Wire the search input to a real server fn that trigram-searches `slack_messages` and returns a dropdown of hits.
 
-**Authenticated server fns (`.middleware([requireSupabaseAuth])`):**
-- `getWorkspace`, `getInstallation`, `disconnectSlack`
-- `askTrelo({question})` — searches `slack_messages` (SQL ILIKE for v1; upgrade to `assistant.search.context` when the team's Slack has AI Search, else pgvector) → Lovable AI Gateway (`google/gemini-2.5-flash`) → returns `{answer_md, sources[]}` and persists to `answers`.
-- `listAnswers`, `listCommitments({filter})`, `updateCommitment({id, status})`, `listDigest({range, channel})`
-- `runIngestion()` — manual "Re-index" button; pulls `conversations.list` + `conversations.history` for accessible channels.
-
-### B5. Ingestion + extraction
-- On every incoming `message` event: store in `slack_messages`, then run a lightweight LLM classifier (Lovable AI Gateway, Gemini Flash) that returns `{is_commitment, title?, owner?, due?, digest_type?}`. Commitments get inserted; digest events get inserted for the Activity Digest view.
-- Owner resolution: Slack user IDs → names via `users.info` (cached in `slack_installations.user_cache jsonb`).
-
-### B6. Wire the dashboard UI
-- **Sidebar**: logout button; workspace name from `getWorkspace`.
-- **Dashboard home**: metric cards from real counts; "Priority Commitments" from `commitments` where `status='pending'` ordered by due date; "Daily Digest" preview from `digest_events` today.
-- **Ask Trelo**: input calls `askTrelo` server fn (useMutation → invalidate `answers`); recent answers list from `listAnswers`; each source is a real Slack permalink.
-- **Commitments**: checkboxes call `updateCommitment`; overdue = `due_date < now AND status='pending'`; completed section from `status='done'`.
-- **Activity Digest**: real timeline from `digest_events`; Today/Yesterday/Week filters + channel filter both drive `loaderDeps` and the query key; search box does full-text search on `summary`.
-
-### B7. Empty state
-If no `slack_installations` row for the workspace → dashboard shows a big "Connect your Slack workspace" card with the OAuth install button. Everything else is hidden until connected.
+## 7. Slack event pipeline sanity pass
+- Verify `slack_event_queue` → `slack_messages` flow is actually populating on new Slack messages (I'll query the DB and spot-check).
+- Fix any gaps so #2–#5 have data to work on.
 
 ---
 
-## Technical details
+## Technical notes
 
-- **Runtime**: server routes for OAuth + events (they need raw `Request`), server functions for everything else. Slack signature verification uses `crypto.createHmac('sha256', SLACK_SIGNING_SECRET)` over `v0:{timestamp}:{rawBody}`, timing-safe compare — never `JSON.parse` before verify.
-- **Long ingestion**: `/api/public/slack/events` MUST respond 200 within 3s or Slack retries. Handler acks immediately, then does `waitUntil`-style background work by invoking an internal server fn without awaiting (Workers-safe pattern) or by dropping the job into a `slack_event_queue` table and processing on the next request. I'll use the queue approach — simpler and durable.
-- **Token storage**: `bot_token` stored in `slack_installations` (private schema, no anon GRANT). Loaded only inside server fn handlers via `supabaseAdmin`.
-- **AI**: Lovable AI Gateway (`google/gemini-2.5-flash` for classification, `google/gemini-2.5-pro` for Ask Trelo answers with citations). Auto-provisions `LOVABLE_API_KEY`.
-- **Search v1**: Postgres `ILIKE` + rank by recency. v2 (fast follow, not this turn): pgvector embeddings on ingest, cosine similarity in `askTrelo`.
-- **Logout hygiene**: `queryClient.cancelQueries()` → `queryClient.clear()` → `supabase.auth.signOut()` → `navigate({to:'/auth', replace:true})`.
-
----
-
-## Order of operations (one turn each)
-
-1. **This turn (after approval)**: enable Cloud, configure Slack social auth, create schema migration, build `/auth` page, move dashboard under `_authenticated/`, add logout, add empty "Connect Slack" state.
-2. **Next turn**: implement `/api/public/slack/install` + `/oauth/callback` + `/events` (signature verify + queue), then I give you the exact manifest JSON with your Cloud URLs pre-filled.
-3. **Then**: ingestion worker + `askTrelo` + `listCommitments`/`updateCommitment` + digest queries; wire all three views to real data.
-4. **Then**: seed a demo workspace + polish empty states.
+- All AI calls use **Lovable AI Gateway** (`LOVABLE_API_KEY`, already set) — no extra keys.
+- All DB access via `createServerFn` + `requireSupabaseAuth` (already wired). Nothing bypasses RLS.
+- Commitment extraction runs synchronously per new message inside the Slack events handler (already at `/api/public/slack/events`) — no cron needed for v1.
+- Digest generated on demand + cached; add cron later if you want auto-daily.
+- Frontend: existing dashboard shell stays, views become real routes/components. Empty states remain for zero-data scenarios.
 
 ---
 
-## Open decisions (I'll assume these unless you object)
+## Suggested execution order (I can do all in this turn)
 
-- **Workspaces = 1 per user** for v1 (a user's account maps to one workspace they own). Multi-user teams / invites = later.
-- **Skip pgvector for v1** — ILIKE + recency is enough for a demo; embeddings later.
-- **No Notion export yet** — the plan.md had Notion as the task destination, but you've since built the Commitments UI inside Trelo. I'll keep tasks native to Trelo and add a "Push to Notion" toggle later if you want.
+1. Logout + user menu (5 min)
+2. Slack pipeline sanity check + fixes
+3. Ask Trelo (chat UI + server fn + retrieval)
+4. Commitments (extractor + list UI + toggle)
+5. Digest (generator + view)
+6. Dashboard home tiles
+7. TopBar search
 
-Approve this and I'll ship step 1.
+**Estimated:** one large turn covers 1–5 solidly; 6–7 can be a follow-up if credits are tight.
+
+---
+
+**Confirm and I'll execute in order.** Or tell me to skip/reprioritize any section (e.g. "skip digest for now, focus on Ask Trelo + Commitments").
