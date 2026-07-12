@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthSlackCompleteRouteImport } from './routes/auth.slack.complete'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicSlackEventsRouteImport } from './routes/api/public/slack/events'
 import { Route as ApiPublicSlackOauthCallbackRouteImport } from './routes/api/public/slack/oauth/callback'
 
@@ -41,6 +42,11 @@ const AuthSlackCompleteRoute = AuthSlackCompleteRouteImport.update({
   path: '/slack/complete',
   getParentRoute: () => AuthRoute,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSlackEventsRoute = ApiPublicSlackEventsRouteImport.update({
   id: '/api/public/slack/events',
   path: '/api/public/slack/events',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/auth/slack/complete': typeof AuthSlackCompleteRoute
   '/api/public/slack/events': typeof ApiPublicSlackEventsRoute
   '/api/public/slack/oauth/callback': typeof ApiPublicSlackOauthCallbackRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/auth/slack/complete': typeof AuthSlackCompleteRoute
   '/api/public/slack/events': typeof ApiPublicSlackEventsRoute
   '/api/public/slack/oauth/callback': typeof ApiPublicSlackOauthCallbackRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/auth/slack/complete': typeof AuthSlackCompleteRoute
   '/api/public/slack/events': typeof ApiPublicSlackEventsRoute
   '/api/public/slack/oauth/callback': typeof ApiPublicSlackOauthCallbackRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/.lovable/oauth/consent'
     | '/auth/slack/complete'
     | '/api/public/slack/events'
     | '/api/public/slack/oauth/callback'
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/.lovable/oauth/consent'
     | '/auth/slack/complete'
     | '/api/public/slack/events'
     | '/api/public/slack/oauth/callback'
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/.lovable/oauth/consent'
     | '/auth/slack/complete'
     | '/api/public/slack/events'
     | '/api/public/slack/oauth/callback'
@@ -111,6 +123,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicSlackEventsRoute: typeof ApiPublicSlackEventsRoute
   ApiPublicSlackOauthCallbackRoute: typeof ApiPublicSlackOauthCallbackRoute
 }
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/slack/complete'
       preLoaderRoute: typeof AuthSlackCompleteRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/slack/events': {
       id: '/api/public/slack/events'
@@ -194,6 +214,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicSlackEventsRoute: ApiPublicSlackEventsRoute,
   ApiPublicSlackOauthCallbackRoute: ApiPublicSlackOauthCallbackRoute,
 }
