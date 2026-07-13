@@ -234,7 +234,7 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
           if (isPublicFlow && slackUserEmail) {
             // Redirect the browser through Supabase's own verify endpoint.
             // Supabase sets the session tokens in the URL hash and then
-            // redirects to /auth/slack/complete, where detectSessionInUrl
+            // redirects to /slack/complete, where detectSessionInUrl
             // picks them up and persists the session before we navigate.
             return redirectWithMagicSignIn(slackUserEmail);
           }
