@@ -760,6 +760,7 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
   const suggestFn = useServerFn(generateCommitmentSuggestions);
   const [newTitle, setNewTitle] = useState("");
   const [completedOpen, setCompletedOpen] = useState(false);
+  const [openItem, setOpenItem] = useState<any | null>(null);
 
   const listQuery = useQuery({ queryKey: ["commitments"], queryFn: () => listFn() });
 
