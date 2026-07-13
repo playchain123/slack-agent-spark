@@ -330,8 +330,8 @@ function TopBar({ collapsed, setCollapsed, onLogout, userEmail, userName }: {
 /* ---------- Dashboard View ---------- */
 function DashboardView({ isConnected, setView }: { isConnected: boolean; setView: (v: View) => void }) {
   const metricsQuery = useQuery({ queryKey: ["dashboardMetrics"], queryFn: () => getDashboardMetrics(), enabled: isConnected });
-  const digestQuery = useQuery({ queryKey: ["digest"], queryFn: () => useServerFnCall(listDigestEvents), enabled: isConnected });
-  const commitmentsQuery = useQuery({ queryKey: ["commitments"], queryFn: () => useServerFnCall(listCommitments), enabled: isConnected });
+  const digestQuery = useQuery({ queryKey: ["digest"], queryFn: () => listDigestEvents(), enabled: isConnected });
+  const commitmentsQuery = useQuery({ queryKey: ["commitments"], queryFn: () => listCommitments(), enabled: isConnected });
   const m = metricsQuery.data;
   const digests = digestQuery.data ?? [];
   const priority = (commitmentsQuery.data ?? []).filter((c: any) => c.status === "pending").slice(0, 4);
