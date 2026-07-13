@@ -836,13 +836,16 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
             {suggested.map((row: any) => (
               <li key={row.id} className="rounded-lg border p-3 bg-white flex items-start gap-3" style={{ borderColor: c.outline }}>
                 <Clock size={13} className="mt-1 text-gray-400 shrink-0" />
-                <div className="flex-1 min-w-0">
+                <button onClick={() => setOpenItem(row)} className="flex-1 min-w-0 text-left hover:opacity-80">
                   <div className="text-[13px] font-medium">{row.title}</div>
                   <div className="text-[10.5px] text-gray-500 flex flex-wrap gap-x-3 mt-0.5">
                     {row.channel_name && <span>#{row.channel_name}</span>}
-                    {row.source_permalink && <a href={row.source_permalink} target="_blank" rel="noreferrer" className="underline">source ↗</a>}
+                    <span className="underline">Read details before adding</span>
                   </div>
-                </div>
+                </button>
+                <button onClick={() => setOpenItem(row)} className="px-2 py-1 rounded-md text-[11px] font-semibold border" style={{ borderColor: c.outline }}>
+                  Review
+                </button>
                 <button onClick={() => accept.mutate(row.id)} className="px-2 py-1 rounded-md text-[11px] font-semibold text-white flex items-center gap-1" style={{ background: "#000" }}>
                   <Check size={12} /> Add
                 </button>
