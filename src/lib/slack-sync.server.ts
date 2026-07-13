@@ -233,6 +233,24 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
     if (error) throw new Error(`Could not save Slack messages: ${error.message}`);
   }
 
+  // Backfill permalinks on any existing rows in this workspace that don't have one.
+  if (teamDomain) {
+    const { data: missing } = await supabaseAdmin
+      .from("slack_messages")
+      .select("id, slack_channel_id, ts")
+      .eq("workspace_id", workspaceId)
+      .is("permalink", null)
+      .limit(2000);
+    if (missing && missing.length > 0) {
+      for (const row of missing) {
+        const url = buildPermalink(row.slack_channel_id, row.ts);
+        if (!url) continue;
+        await supabaseAdmin.from("slack_messages").update({ permalink: url }).eq("id", row.id);
+      }
+    }
+  }
+
+
   return {
     channelsFound: channels.length,
     channelsSynced: channelRows.length,
