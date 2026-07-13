@@ -25,9 +25,10 @@ export const getMyWorkspace = createServerFn({ method: "GET" })
       owner_id: string;
     };
 
-    // Get Slack installation (via safe view — bot_token not exposed)
-    const { data: installation } = await supabase
-      .from("slack_installations_public")
+    // Get Slack installation server-side, returning only safe fields to the client.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: installation } = await supabaseAdmin
+      .from("slack_installations")
       .select("id, slack_team_id, slack_team_name, bot_user_id, installed_at")
       .eq("workspace_id", workspace.id)
       .maybeSingle();
