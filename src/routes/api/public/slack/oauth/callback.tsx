@@ -231,6 +231,21 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
             return new Response("Failed to store installation", { status: 500 });
           }
 
+          if (tokenData.access_token) {
+            try {
+              const { syncWorkspaceSlack } = await import("@/lib/slack-sync.server");
+              await syncWorkspaceSlack({
+                workspaceId,
+                botToken: tokenData.access_token,
+                maxChannels: 12,
+                messagesPerChannel: 12,
+                joinPublicChannels: true,
+              });
+            } catch (syncError) {
+              console.error("Initial Slack sync failed", syncError);
+            }
+          }
+
           if (isPublicFlow && slackUserEmail) {
             // Redirect the browser through Supabase's own verify endpoint.
             // Supabase sets the session tokens in the URL hash and then

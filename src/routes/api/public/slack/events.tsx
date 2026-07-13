@@ -42,10 +42,7 @@ export const Route = createFileRoute("/api/public/slack/events")({
         const teamId = event?.team ?? event?.team_id ?? payload.team_id;
 
         if (event && teamId) {
-          // Fire-and-forget processing so Slack gets a fast 200
-          void processEvent(teamId, event).catch((err) =>
-            console.error("Slack event processing failed", err),
-          );
+          await processEvent(teamId, event);
         }
 
         return new Response("ok");
@@ -139,46 +136,63 @@ async function processEvent(teamId: string, event: any) {
   }
 
   // Insert message
-  const { data: msgRow } = await supabaseAdmin
+  const { data: msgRow, error: messageError } = await supabaseAdmin
     .from("slack_messages")
-    .insert({
-      workspace_id: workspaceId,
-      slack_channel_id: event.channel,
-      slack_user_id: event.user ?? null,
-      slack_user_name: userName,
-      text: event.text,
-      ts: event.ts ?? null,
-      permalink,
-    })
+    .upsert(
+      {
+        workspace_id: workspaceId,
+        slack_channel_id: event.channel,
+        slack_user_id: event.user ?? null,
+        slack_user_name: userName,
+        text: event.text,
+        ts: event.ts ?? null,
+        permalink,
+        created_at: event.ts ? new Date(Math.floor(Number.parseFloat(event.ts) * 1000)).toISOString() : undefined,
+      },
+      { onConflict: "workspace_id,slack_channel_id,ts" },
+    )
     .select("id")
     .single();
 
-  // Extract commitments with AI (best effort, no blocking)
-  try {
-    const { aiJSON } = await import("@/lib/ai.server");
-    const extracted = await aiJSON<{ commitments: Array<{ title: string; owner?: string; due?: string | null }> }>(
-      "You are an assistant that extracts ACTION ITEMS or COMMITMENTS from a single Slack message. Return JSON: { \"commitments\": [{ \"title\": string, \"owner\": string|null, \"due\": string|null }] }. Only extract explicit commitments like 'I will do X by Friday' or 'Can you review this by tomorrow'. If none, return an empty array. Do not invent tasks.",
-      `Message from ${userName ?? "user"} in #${channelName ?? "channel"}:\n${event.text}`,
-    );
-
-    const list = Array.isArray(extracted?.commitments) ? extracted.commitments : [];
-    for (const c of list.slice(0, 3)) {
-      if (!c?.title) continue;
-      await supabaseAdmin.from("commitments").insert({
-        workspace_id: workspaceId,
-        title: c.title,
-        owner_name: c.owner ?? userName ?? null,
-        owner_slack_id: event.user ?? null,
-        due_date: c.due && /^\d{4}-\d{2}-\d{2}/.test(c.due) ? c.due.slice(0, 10) : null,
-        status: "open",
-        priority: "medium",
-        source_permalink: permalink,
-        channel_name: channelName,
-      });
-    }
-  } catch (err) {
-    console.error("commitment extraction failed", err);
+  if (messageError) {
+    console.error("Failed to save Slack message", messageError);
+    return;
   }
 
+  void extractCommitments({ workspaceId, event, userName, channelName, permalink }).catch((err) => {
+    console.error("commitment extraction failed", err);
+  });
+
   void msgRow;
+}
+
+async function extractCommitments({ workspaceId, event, userName, channelName, permalink }: {
+  workspaceId: string;
+  event: any;
+  userName: string | null;
+  channelName: string | null;
+  permalink: string | null;
+}) {
+  const { aiJSON } = await import("@/lib/ai.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const extracted = await aiJSON<{ commitments: Array<{ title: string; owner?: string; due?: string | null }> }>(
+    "You are an assistant that extracts ACTION ITEMS or COMMITMENTS from a single Slack message. Return JSON: { \"commitments\": [{ \"title\": string, \"owner\": string|null, \"due\": string|null }] }. Only extract explicit commitments like 'I will do X by Friday' or 'Can you review this by tomorrow'. If none, return an empty array. Do not invent tasks.",
+    `Message from ${userName ?? "user"} in #${channelName ?? "channel"}:\n${event.text}`,
+  );
+
+  const list = Array.isArray(extracted?.commitments) ? extracted.commitments : [];
+  for (const c of list.slice(0, 3)) {
+    if (!c?.title) continue;
+    await supabaseAdmin.from("commitments").insert({
+      workspace_id: workspaceId,
+      title: c.title,
+      owner_name: c.owner ?? userName ?? null,
+      owner_slack_id: event.user ?? null,
+      due_date: c.due && /^\d{4}-\d{2}-\d{2}/.test(c.due) ? c.due.slice(0, 10) : null,
+      status: "pending",
+      priority: "normal",
+      source_permalink: permalink,
+      channel_name: channelName,
+    });
+  }
 }
