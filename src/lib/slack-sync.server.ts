@@ -130,6 +130,17 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const errors: string[] = [];
 
+  // Fetch team domain to build permalinks: https://{domain}.slack.com/archives/{channel}/p{ts_no_dot}
+  let teamDomain: string | null = null;
+  try {
+    const teamInfo = await slackApi<{ team?: { domain?: string } }>(botToken, "team.info");
+    teamDomain = teamInfo.team?.domain ?? null;
+  } catch (err) {
+    console.warn("team.info failed during Slack sync", err);
+  }
+  const buildPermalink = (channelId: string, ts: string) =>
+    teamDomain ? `https://${teamDomain}.slack.com/archives/${channelId}/p${ts.replace(".", "")}` : null;
+
   const channels = await listChannels(botToken, maxChannels);
   if (channels.length === 0) {
     return { channelsFound: 0, channelsSynced: 0, messagesSynced: 0, errors };
@@ -146,6 +157,7 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
     .from("slack_channels")
     .upsert(channelRows, { onConflict: "workspace_id,slack_channel_id" });
   if (channelError) throw new Error(`Could not save Slack channels: ${channelError.message}`);
+
 
   const messages: Array<{
     workspace_id: string;
