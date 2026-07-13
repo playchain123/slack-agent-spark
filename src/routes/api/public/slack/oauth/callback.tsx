@@ -239,25 +239,6 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
             return redirectWithMagicSignIn(slackUserEmail);
           }
 
-          if (!isPublicFlow && stateUserId) {
-            const { data: profile } = await supabaseAdmin
-              .from("profiles")
-              .select("email")
-              .eq("id", stateUserId)
-              .maybeSingle();
-            let loginEmail = profile?.email ?? null;
-
-            if (!loginEmail) {
-              const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(stateUserId);
-              if (userError) console.error("Failed to load Slack installer user", userError);
-              loginEmail = userData.user?.email ?? null;
-            }
-
-            if (loginEmail) {
-              return redirectWithMagicSignIn(loginEmail);
-            }
-          }
-
           return Response.redirect(`${returnOrigin ?? new URL(request.url).origin}/dashboard?slack=connected`, 302);
         } catch (err) {
           console.error("OAuth callback error", err);
