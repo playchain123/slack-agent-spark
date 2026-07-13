@@ -332,6 +332,8 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
   const metricsQuery = useQuery({ queryKey: ["dashboardMetrics"], queryFn: () => getDashboardMetrics(), enabled: isConnected });
   const digestQuery = useQuery({ queryKey: ["digest"], queryFn: () => listDigestEvents(), enabled: isConnected });
   const commitmentsQuery = useQuery({ queryKey: ["commitments"], queryFn: () => listCommitments(), enabled: isConnected });
+  const [openDigest, setOpenDigest] = useState<any | null>(null);
+  const [openCommit, setOpenCommit] = useState<any | null>(null);
   const m = metricsQuery.data;
   const digests = digestQuery.data ?? [];
   const priority = (commitmentsQuery.data ?? []).filter((c: any) => c.status === "pending").slice(0, 4);
@@ -382,13 +384,15 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
           ) : (
             <div className="space-y-3">
               {digests.slice(0, 4).map((d: any) => (
-                <article key={d.id} className="rounded-lg border p-3" style={{ borderColor: c.surfaceMid, background: "#fafafa" }}>
+                <button key={d.id} onClick={() => setOpenDigest(d)}
+                  className="w-full text-left rounded-lg border p-3 hover:shadow-sm transition-shadow" style={{ borderColor: c.surfaceMid, background: "#fafafa" }}>
                   <div className="flex items-center justify-between gap-3 mb-1.5">
                     <span className="text-[10.5px] font-bold px-2 py-0.5 rounded" style={{ background: "#000", color: "#fff" }}>#{d.channel_name ?? "channel"}</span>
                     <span className="text-[10.5px] text-gray-500">{formatDistanceToNow(new Date(d.occurred_at), { addSuffix: true })}</span>
                   </div>
                   <div className="text-[12.5px] whitespace-pre-wrap leading-relaxed line-clamp-4">{d.summary}</div>
-                </article>
+                  <div className="text-[10.5px] text-gray-500 mt-2 font-semibold">Click to read full digest →</div>
+                </button>
               ))}
             </div>
           )}
@@ -415,15 +419,17 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
             ) : (
               <ul className="space-y-2">
                 {priority.map((p: any) => (
-                  <li key={p.id} className="flex items-start gap-2 text-[12px]">
-                    <div className="mt-1 w-3.5 h-3.5 rounded border shrink-0" style={{ borderColor: c.outline }} />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold truncate">{p.title}</div>
-                      <div className="text-[10.5px] text-gray-500 flex gap-2 mt-0.5">
-                        {p.due_date && <span>📅 {p.due_date}</span>}
-                        {p.channel_name && <span>#{p.channel_name}</span>}
+                  <li key={p.id}>
+                    <button onClick={() => setOpenCommit(p)} className="w-full text-left flex items-start gap-2 text-[12px] hover:bg-gray-50 rounded p-1 -m-1">
+                      <div className="mt-1 w-3.5 h-3.5 rounded border shrink-0" style={{ borderColor: c.outline }} />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold truncate">{p.title}</div>
+                        <div className="text-[10.5px] text-gray-500 flex gap-2 mt-0.5">
+                          {p.due_date && <span>📅 {p.due_date}</span>}
+                          {p.channel_name && <span>#{p.channel_name}</span>}
+                        </div>
                       </div>
-                    </div>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -434,6 +440,8 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
           </div>
         </aside>
       </div>
+      <DigestDetailModal digest={openDigest} onClose={() => setOpenDigest(null)} />
+      <CommitmentDetailModal item={openCommit} onClose={() => setOpenCommit(null)} />
     </div>
   );
 }
@@ -444,18 +452,145 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
 function BigTile({ label, value, icon, onClick, highlight }: { label: string; value: number | string; icon?: React.ReactNode; onClick?: () => void; highlight?: boolean }) {
   return (
     <button onClick={onClick} disabled={!onClick}
-      className="text-left rounded-xl border p-4 disabled:cursor-default hover:shadow-sm transition-shadow"
+      className="text-left rounded-lg border px-3 py-2.5 disabled:cursor-default hover:shadow-sm transition-shadow"
       style={{ borderColor: c.outline, background: highlight ? "#000" : "#fff", color: highlight ? "#fff" : c.onSurface }}>
-      <div className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-wider font-semibold" style={{ opacity: highlight ? 0.8 : 0.6 }}>
+      <div className="flex items-center gap-1 text-[9.5px] uppercase tracking-wider font-semibold" style={{ opacity: highlight ? 0.8 : 0.6 }}>
         {icon} {label}
       </div>
-      <div className="text-[28px] font-black mt-2 leading-none">{value}</div>
+      <div className="text-[18px] font-black mt-1 leading-none">{value}</div>
     </button>
   );
 }
 
 function EmptyLine({ text }: { text: string }) {
   return <div className="text-[11.5px]" style={{ color: c.onSurfaceVariant }}>{text}</div>;
+}
+
+/* ---------- Detail Modal ---------- */
+function DetailModal({ open, onClose, title, subtitle, children, footer }: {
+  open: boolean; onClose: () => void; title: string; subtitle?: string;
+  children: React.ReactNode; footer?: React.ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.55)" }} onClick={onClose}>
+      <div className="w-full max-w-2xl max-h-[85vh] rounded-xl bg-white flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3 p-5 border-b" style={{ borderColor: c.surfaceMid }}>
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] font-bold break-words">{title}</div>
+            {subtitle && <div className="text-[11.5px] text-gray-500 mt-0.5">{subtitle}</div>}
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-black text-[20px] leading-none px-1">×</button>
+        </div>
+        <div className="flex-1 overflow-auto p-5 text-[13px] leading-relaxed">{children}</div>
+        {footer && <div className="p-4 border-t flex items-center justify-end gap-2" style={{ borderColor: c.surfaceMid }}>{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+function DigestDetailModal({ digest, onClose }: { digest: any | null; onClose: () => void }) {
+  return (
+    <DetailModal
+      open={Boolean(digest)}
+      onClose={onClose}
+      title={digest ? `#${digest.channel_name ?? "channel"}` : ""}
+      subtitle={digest ? formatDistanceToNow(new Date(digest.occurred_at), { addSuffix: true }) : ""}
+      footer={
+        <a href={digest?.permalink ?? "https://slack.com"} target="_blank" rel="noreferrer"
+          className="h-9 px-3 rounded-md text-[12px] font-semibold text-white flex items-center gap-1.5" style={{ background: "#000" }}>
+          View in Slack <ExternalLink size={12} />
+        </a>
+      }>
+      <div className="whitespace-pre-wrap">{digest?.summary}</div>
+    </DetailModal>
+  );
+}
+
+function AnswerDetailModal({ item, onClose }: { item: any | null; onClose: () => void }) {
+  const sources = item?.sources ?? [];
+  return (
+    <DetailModal
+      open={Boolean(item)}
+      onClose={onClose}
+      title={item?.question ?? ""}
+      subtitle={item?.created_at ? formatDistanceToNow(new Date(item.created_at), { addSuffix: true }) : undefined}>
+      <div className="whitespace-pre-wrap mb-4">{item?.answer_md ?? item?.answer}</div>
+      {sources.length > 0 && (
+        <div className="pt-3 border-t" style={{ borderColor: c.surfaceMid }}>
+          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">{sources.length} source{sources.length === 1 ? "" : "s"}</div>
+          <div className="space-y-2">
+            {sources.map((s: any, i: number) => (
+              <a key={i} href={s.permalink ?? "#"} target="_blank" rel="noreferrer"
+                className="block text-[12px] hover:underline p-2 rounded border" style={{ borderColor: c.surfaceMid }}>
+                <span className="text-gray-400">[{s.index ?? i + 1}]</span>{" "}
+                <span className="font-semibold">#{s.channel ?? "channel"}</span> — <span className="text-gray-600">{s.text}</span>
+                {s.permalink && <ExternalLink size={11} className="inline ml-1" />}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </DetailModal>
+  );
+}
+
+function CommitmentDetailModal({ item, onClose, onAccept, onToggle, onDelete }: {
+  item: any | null; onClose: () => void;
+  onAccept?: (id: string) => void; onToggle?: (id: string, done: boolean) => void; onDelete?: (id: string) => void;
+}) {
+  if (!item) return null;
+  return (
+    <DetailModal
+      open
+      onClose={onClose}
+      title={item.title}
+      subtitle={`Status: ${item.status}${item.channel_name ? ` • #${item.channel_name}` : ""}`}
+      footer={
+        <>
+          {item.source_permalink && (
+            <a href={item.source_permalink} target="_blank" rel="noreferrer"
+              className="h-9 px-3 rounded-md text-[12px] font-semibold border flex items-center gap-1.5" style={{ borderColor: c.outline }}>
+              Open in Slack <ExternalLink size={12} />
+            </a>
+          )}
+          {item.status === "suggested" && onAccept && (
+            <button onClick={() => { onAccept(item.id); onClose(); }}
+              className="h-9 px-3 rounded-md text-[12px] font-semibold text-white flex items-center gap-1.5" style={{ background: "#000" }}>
+              <Check size={12} /> Add to commitments
+            </button>
+          )}
+          {item.status === "pending" && onToggle && (
+            <button onClick={() => { onToggle(item.id, true); onClose(); }}
+              className="h-9 px-3 rounded-md text-[12px] font-semibold text-white" style={{ background: "#000" }}>
+              Mark done
+            </button>
+          )}
+          {onDelete && (
+            <button onClick={() => { onDelete(item.id); onClose(); }}
+              className="h-9 px-3 rounded-md text-[12px] font-semibold border text-red-600" style={{ borderColor: c.outline }}>
+              Delete
+            </button>
+          )}
+        </>
+      }>
+      <div className="space-y-3">
+        {item.description && <div className="whitespace-pre-wrap">{item.description}</div>}
+        {item.source_text && (
+          <div className="rounded-lg border p-3 bg-gray-50" style={{ borderColor: c.surfaceMid }}>
+            <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Source message</div>
+            <div className="text-[12.5px] whitespace-pre-wrap">{item.source_text}</div>
+          </div>
+        )}
+        <dl className="grid grid-cols-2 gap-2 text-[12px]">
+          {item.due_date && (<><dt className="text-gray-500">Due</dt><dd>{item.due_date}</dd></>)}
+          {item.owner_name && (<><dt className="text-gray-500">Owner</dt><dd>{item.owner_name}</dd></>)}
+          {item.channel_name && (<><dt className="text-gray-500">Channel</dt><dd>#{item.channel_name}</dd></>)}
+          {item.created_at && (<><dt className="text-gray-500">Created</dt><dd>{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</dd></>)}
+        </dl>
+      </div>
+    </DetailModal>
+  );
 }
 
 /* ---------- Ask Trelo ---------- */
@@ -472,6 +607,7 @@ function AskView({ isConnected }: { isConnected: boolean }) {
   const listAnswersFn = useServerFn(listRecentAnswers);
   const [input, setInput] = useState("");
   const [lastQuestion, setLastQuestion] = useState("");
+  const [openAnswer, setOpenAnswer] = useState<any | null>(null);
 
   const historyQuery = useQuery({
     queryKey: ["answers", "all"],
@@ -549,7 +685,9 @@ function AskView({ isConnected }: { isConnected: boolean }) {
             )}
             <div className="grid md:grid-cols-2 gap-3">
               {answers.map((a: any) => (
-                <AnswerCard key={a.id} question={a.question} answer={a.answer_md} sources={a.sources ?? []} timestamp={a.created_at} compact />
+                <button key={a.id} onClick={() => setOpenAnswer(a)} className="text-left">
+                  <AnswerCard question={a.question} answer={a.answer_md} sources={a.sources ?? []} timestamp={a.created_at} compact />
+                </button>
               ))}
             </div>
           </div>
@@ -564,9 +702,11 @@ function AskView({ isConnected }: { isConnected: boolean }) {
               <ul className="space-y-3">
                 {trending.map((t: any) => (
                   <li key={t.id}>
-                    <div className="text-[10.5px] uppercase tracking-wider font-semibold text-gray-500">Recent</div>
-                    <div className="text-[12px] font-semibold line-clamp-2 mt-0.5">{t.question}</div>
-                    <div className="text-[10.5px] text-gray-500 mt-0.5">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}</div>
+                    <button onClick={() => setOpenAnswer(t)} className="w-full text-left hover:bg-gray-50 rounded p-1 -m-1">
+                      <div className="text-[10.5px] uppercase tracking-wider font-semibold text-gray-500">Recent</div>
+                      <div className="text-[12px] font-semibold line-clamp-2 mt-0.5">{t.question}</div>
+                      <div className="text-[10.5px] text-gray-500 mt-0.5">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}</div>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -578,6 +718,7 @@ function AskView({ isConnected }: { isConnected: boolean }) {
           </div>
         </aside>
       </div>
+      <AnswerDetailModal item={openAnswer} onClose={() => setOpenAnswer(null)} />
     </div>
   );
 }
@@ -619,6 +760,7 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
   const suggestFn = useServerFn(generateCommitmentSuggestions);
   const [newTitle, setNewTitle] = useState("");
   const [completedOpen, setCompletedOpen] = useState(false);
+  const [openItem, setOpenItem] = useState<any | null>(null);
 
   const listQuery = useQuery({ queryKey: ["commitments"], queryFn: () => listFn() });
 
@@ -657,7 +799,8 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
           </h3>
           <div className="grid md:grid-cols-3 gap-3">
             {overdue.map((row: any) => (
-              <div key={row.id} className="rounded-xl border p-4 bg-white border-l-4" style={{ borderColor: c.outline, borderLeftColor: "#000" }}>
+              <button key={row.id} onClick={() => setOpenItem(row)}
+                className="text-left rounded-xl border p-4 bg-white border-l-4 hover:shadow-sm transition-shadow" style={{ borderColor: c.outline, borderLeftColor: "#000" }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#000", color: "#fff" }}>OVERDUE</span>
                   <span className="text-[10.5px] text-gray-500">{formatDistanceToNow(new Date(row.due_date), { addSuffix: true })}</span>
@@ -666,9 +809,9 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
                 {row.channel_name && <div className="text-[10.5px] text-gray-500 mb-2">#{row.channel_name}</div>}
                 <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: c.surfaceMid }}>
                   <span className="text-[11px] text-gray-600">{row.owner_name ?? "Unassigned"}</span>
-                  <button onClick={() => toggle.mutate({ id: row.id, done: true })} className="text-[10.5px] font-semibold underline">Mark done</button>
+                  <span className="text-[10.5px] font-semibold underline">View details</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </section>
@@ -693,13 +836,16 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
             {suggested.map((row: any) => (
               <li key={row.id} className="rounded-lg border p-3 bg-white flex items-start gap-3" style={{ borderColor: c.outline }}>
                 <Clock size={13} className="mt-1 text-gray-400 shrink-0" />
-                <div className="flex-1 min-w-0">
+                <button onClick={() => setOpenItem(row)} className="flex-1 min-w-0 text-left hover:opacity-80">
                   <div className="text-[13px] font-medium">{row.title}</div>
                   <div className="text-[10.5px] text-gray-500 flex flex-wrap gap-x-3 mt-0.5">
                     {row.channel_name && <span>#{row.channel_name}</span>}
-                    {row.source_permalink && <a href={row.source_permalink} target="_blank" rel="noreferrer" className="underline">source ↗</a>}
+                    <span className="underline">Read details before adding</span>
                   </div>
-                </div>
+                </button>
+                <button onClick={() => setOpenItem(row)} className="px-2 py-1 rounded-md text-[11px] font-semibold border" style={{ borderColor: c.outline }}>
+                  Review
+                </button>
                 <button onClick={() => accept.mutate(row.id)} className="px-2 py-1 rounded-md text-[11px] font-semibold text-white flex items-center gap-1" style={{ background: "#000" }}>
                   <Check size={12} /> Add
                 </button>
@@ -725,14 +871,14 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
           {pending.map((row: any) => (
             <li key={row.id} className="rounded-lg border p-3 bg-white flex items-center gap-3" style={{ borderColor: c.outline }}>
               <input type="checkbox" checked={false} onChange={(e) => toggle.mutate({ id: row.id, done: e.target.checked })} className="h-4 w-4" />
-              <div className="flex-1 min-w-0">
+              <button onClick={() => setOpenItem(row)} className="flex-1 min-w-0 text-left hover:opacity-80">
                 <div className="text-[13px] font-semibold truncate">{row.title}</div>
                 <div className="text-[10.5px] text-gray-500 flex flex-wrap gap-x-3 mt-0.5">
                   {row.channel_name && <span>#{row.channel_name}</span>}
                   {row.due_date && <span>📅 {row.due_date}</span>}
                   {row.owner_name && <span>👤 {row.owner_name}</span>}
                 </div>
-              </div>
+              </button>
               <span className="text-[10px] font-bold px-2 py-1 rounded border" style={{ borderColor: c.outline }}>To Do</span>
               {row.source_permalink && (
                 <a href={row.source_permalink} target="_blank" rel="noreferrer" className="p-1 text-gray-400 hover:text-black" title="Open in Slack">
@@ -755,7 +901,7 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
             {done.map((row: any) => (
               <li key={row.id} className="rounded-lg border p-3 bg-white flex items-center gap-3 opacity-60" style={{ borderColor: c.outline }}>
                 <input type="checkbox" checked onChange={(e) => toggle.mutate({ id: row.id, done: e.target.checked })} className="h-4 w-4" />
-                <div className="flex-1 min-w-0 text-[12.5px] line-through truncate">{row.title}</div>
+                <button onClick={() => setOpenItem(row)} className="flex-1 min-w-0 text-[12.5px] line-through truncate text-left">{row.title}</button>
                 <span className="text-[10px] font-bold px-2 py-1 rounded" style={{ background: c.surfaceMid }}>Done</span>
                 <button onClick={() => del.mutate(row.id)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={13} /></button>
               </li>
@@ -763,6 +909,10 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
           </ul>
         )}
       </section>
+      <CommitmentDetailModal item={openItem} onClose={() => setOpenItem(null)}
+        onAccept={(id) => accept.mutate(id)}
+        onToggle={(id, done) => toggle.mutate({ id, done })}
+        onDelete={(id) => del.mutate(id)} />
     </div>
   );
 }
@@ -774,6 +924,7 @@ function DigestView({ isConnected }: { isConnected: boolean }) {
   const genFn = useServerFn(generateDigest);
   const [range, setRange] = useState<"today" | "yesterday" | "week">("today");
   const [channelFilter, setChannelFilter] = useState<string>("all");
+  const [openDigest, setOpenDigest] = useState<any | null>(null);
   const listQuery = useQuery({ queryKey: ["digest"], queryFn: () => listFn() });
   const gen = useMutation({ mutationFn: () => genFn(), onSuccess: () => qc.invalidateQueries({ queryKey: ["digest"] }) });
 
@@ -850,18 +1001,19 @@ function DigestView({ isConnected }: { isConnected: boolean }) {
 
           <div className="space-y-3">
             {filtered.map((d: any) => (
-              <article key={d.id} className="rounded-xl border bg-white p-4" style={{ borderColor: c.outline }}>
+              <button key={d.id} onClick={() => setOpenDigest(d)}
+                className="w-full text-left rounded-xl border bg-white p-4 hover:shadow-sm transition-shadow" style={{ borderColor: c.outline }}>
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-[10.5px] font-bold px-2 py-0.5 rounded" style={{ background: "#000", color: "#fff" }}>#{d.channel_name}</span>
                     <span className="text-[10.5px] text-gray-500">{formatDistanceToNow(new Date(d.occurred_at), { addSuffix: true })}</span>
                   </div>
-                  <a href="https://slack.com" target="_blank" rel="noreferrer" className="text-[11px] font-semibold underline flex items-center gap-1">
-                    View in Slack <ExternalLink size={10} />
-                  </a>
+                  <span className="text-[11px] font-semibold underline flex items-center gap-1">
+                    Read full digest <ExternalLink size={10} />
+                  </span>
                 </div>
-                <div className="text-[12.5px] whitespace-pre-wrap leading-relaxed">{d.summary}</div>
-              </article>
+                <div className="text-[12.5px] whitespace-pre-wrap leading-relaxed line-clamp-5">{d.summary}</div>
+              </button>
             ))}
           </div>
         </section>
@@ -905,6 +1057,7 @@ function DigestView({ isConnected }: { isConnected: boolean }) {
           </div>
         </aside>
       </div>
+      <DigestDetailModal digest={openDigest} onClose={() => setOpenDigest(null)} />
     </div>
   );
 }
