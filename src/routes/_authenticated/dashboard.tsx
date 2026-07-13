@@ -438,8 +438,8 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
   );
 }
 
-// tiny helper — server fns are usually invoked via useServerFn hook, but here queryFn returns the promise directly.
-function useServerFnCall<T>(fn: () => Promise<T>): Promise<T> { return fn(); }
+
+
 
 function BigTile({ label, value, icon, onClick, highlight }: { label: string; value: number | string; icon?: React.ReactNode; onClick?: () => void; highlight?: boolean }) {
   return (
