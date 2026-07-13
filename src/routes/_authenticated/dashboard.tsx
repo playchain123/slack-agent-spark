@@ -440,6 +440,8 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
           </div>
         </aside>
       </div>
+      <DigestDetailModal digest={openDigest} onClose={() => setOpenDigest(null)} />
+      <CommitmentDetailModal item={openCommit} onClose={() => setOpenCommit(null)} />
     </div>
   );
 }
