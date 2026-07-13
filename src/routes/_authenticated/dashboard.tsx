@@ -799,7 +799,8 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
           </h3>
           <div className="grid md:grid-cols-3 gap-3">
             {overdue.map((row: any) => (
-              <div key={row.id} className="rounded-xl border p-4 bg-white border-l-4" style={{ borderColor: c.outline, borderLeftColor: "#000" }}>
+              <button key={row.id} onClick={() => setOpenItem(row)}
+                className="text-left rounded-xl border p-4 bg-white border-l-4 hover:shadow-sm transition-shadow" style={{ borderColor: c.outline, borderLeftColor: "#000" }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#000", color: "#fff" }}>OVERDUE</span>
                   <span className="text-[10.5px] text-gray-500">{formatDistanceToNow(new Date(row.due_date), { addSuffix: true })}</span>
@@ -808,9 +809,9 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
                 {row.channel_name && <div className="text-[10.5px] text-gray-500 mb-2">#{row.channel_name}</div>}
                 <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: c.surfaceMid }}>
                   <span className="text-[11px] text-gray-600">{row.owner_name ?? "Unassigned"}</span>
-                  <button onClick={() => toggle.mutate({ id: row.id, done: true })} className="text-[10.5px] font-semibold underline">Mark done</button>
+                  <span className="text-[10.5px] font-semibold underline">View details</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </section>
