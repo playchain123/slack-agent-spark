@@ -6,10 +6,14 @@ import { getMyWorkspace } from "@/lib/workspace.functions";
 import { getSlackInstallUrl, syncSlackMessages } from "@/lib/slack.functions";
 import {
   getDashboardMetrics,
+  listSlackChannels,
+  listChannelMessages,
   listCommitments,
   toggleCommitment,
   deleteCommitment,
   createCommitment,
+  acceptCommitmentSuggestion,
+  generateCommitmentSuggestions,
   listDigestEvents,
   generateDigest,
   askTrelo,
@@ -21,6 +25,7 @@ import {
   LogOut, Slack, LayoutDashboard, MessageSquare, CheckSquare, Newspaper,
   Search, Bell, HelpCircle, Plus, Sparkles, PanelLeftClose, PanelLeftOpen,
   Inbox, Send, ExternalLink, Trash2, Loader2, RefreshCw, MessageCircle,
+  Hash, ChevronDown, ChevronRight, ListPlus, Check, Clock,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -47,6 +52,14 @@ const c = {
 };
 
 type View = "dashboard" | "ask" | "commitments" | "digest";
+
+type SlackChannelRow = {
+  id: string;
+  name: string | null;
+  slack_channel_id: string;
+  messageCount?: number;
+  latestMessage?: { text?: string; slack_user_name?: string | null; created_at?: string; permalink?: string | null } | null;
+};
 
 function TreloLogo({ size = 32 }: { size?: number }) {
   return (
@@ -342,36 +355,39 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
 
       {isConnected && (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
             <MetricCard label="Messages (24h)" value={m?.messages24h ?? "—"} />
             <MetricCard label="Messages (7d)" value={m?.messages7d ?? "—"} />
+            <MetricCard label="Suggested tasks" value={m?.suggestedCommitments ?? "—"} onClick={() => setView("commitments")} />
             <MetricCard label="Open commitments" value={m?.openCommitments ?? "—"} onClick={() => setView("commitments")} />
             <MetricCard label="Completed" value={m?.doneCommitments ?? "—"} onClick={() => setView("commitments")} />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-4">
             <Card title="Active channels">
               {(m?.channels?.length ?? 0) === 0 ? (
                 <EmptyLine text="No channels indexed yet. Post in a channel your Trelo bot is in." />
               ) : (
-                <ul className="space-y-1.5">
+                <div className="grid sm:grid-cols-2 gap-2">
                   {m!.channels.map((ch: any) => {
                     const teamId = (m as any)?.slackTeamId;
                     const href = teamId
                       ? `https://app.slack.com/client/${teamId}/${ch.slack_channel_id}`
                       : null;
-                    const content = (
-                      <><span className="text-gray-400">#</span>{ch.name ?? ch.slack_channel_id}</>
-                    );
                     return (
-                      <li key={ch.id} className="text-[12.5px] flex items-center gap-2">
-                        {href ? (
-                          <a href={href} target="_blank" rel="noreferrer" className="hover:underline">{content}</a>
-                        ) : content}
-                      </li>
+                      <a key={ch.id} href={href ?? "#"} target={href ? "_blank" : undefined} rel="noreferrer"
+                        className="rounded-lg border p-3 bg-[#fafafa] hover:bg-white transition-colors min-h-[84px]"
+                        style={{ borderColor: c.surfaceMid }}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-[12px] font-bold truncate"><span className="text-gray-400">#</span>{ch.name ?? ch.slack_channel_id}</div>
+                          <ExternalLink size={12} className="text-gray-400 shrink-0" />
+                        </div>
+                        <div className="text-[20px] font-black leading-none mt-2">{ch.messageCount ?? 0}</div>
+                        <div className="text-[10.5px] text-gray-500 mt-1 line-clamp-1">{ch.latestMessage?.text ?? "No indexed message yet"}</div>
+                      </a>
                     );
                   })}
-                </ul>
+                </div>
 
               )}
             </Card>
@@ -383,7 +399,13 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
                   {m!.latestDigest.map((d: any) => (
                     <li key={d.id} className="text-[12px]">
                       <div className="font-semibold text-[11px] uppercase tracking-wide text-gray-500">#{d.channel_name}</div>
-                      <div className="line-clamp-3 whitespace-pre-line">{d.summary}</div>
+                      <details className="group mt-1">
+                        <summary className="cursor-pointer list-none flex items-start gap-2">
+                          <ChevronRight size={13} className="mt-0.5 group-open:hidden shrink-0" />
+                          <ChevronDown size={13} className="mt-0.5 hidden group-open:block shrink-0" />
+                          <span className="line-clamp-2 group-open:line-clamp-none whitespace-pre-line">{d.summary}</span>
+                        </summary>
+                      </details>
                     </li>
                   ))}
                 </ul>
@@ -426,62 +448,145 @@ function EmptyLine({ text }: { text: string }) {
 function AskView({ isConnected }: { isConnected: boolean }) {
   const qc = useQueryClient();
   const askFn = useServerFn(askTrelo);
-  const historyQuery = useQuery({ queryKey: ["answers"], queryFn: () => listRecentAnswers(), enabled: isConnected });
+  const listAnswersFn = useServerFn(listRecentAnswers);
+  const channelsFn = useServerFn(listSlackChannels);
+  const messagesFn = useServerFn(listChannelMessages);
   const [input, setInput] = useState("");
   const [lastQuestion, setLastQuestion] = useState("");
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
+  const channelsQuery = useQuery({ queryKey: ["slackChannels"], queryFn: () => channelsFn(), enabled: isConnected });
+  const selectedChannel = (channelsQuery.data ?? []).find((ch: SlackChannelRow) => ch.slack_channel_id === selectedChannelId) ?? null;
+  const historyQuery = useQuery({
+    queryKey: ["answers", selectedChannelId],
+    queryFn: () => listAnswersFn({ data: { channelId: selectedChannelId ?? undefined } }),
+    enabled: isConnected,
+  });
+  const messagesQuery = useQuery({
+    queryKey: ["channelMessages", selectedChannelId],
+    queryFn: () => messagesFn({ data: { channelId: selectedChannelId!, limit: 40 } }),
+    enabled: isConnected && Boolean(selectedChannelId),
+  });
+
+  useEffect(() => {
+    if (!selectedChannelId && channelsQuery.data && channelsQuery.data.length > 0) {
+      setSelectedChannelId(channelsQuery.data[0].slack_channel_id);
+    }
+  }, [channelsQuery.data, selectedChannelId]);
+
   const mutation = useMutation({
     mutationFn: (question: string) => {
       setLastQuestion(question);
-      return askFn({ data: { question } });
+      return askFn({ data: { question, channelId: selectedChannelId ?? undefined } });
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["answers"] }); setInput(""); },
   });
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-4">
         <h2 className="text-[20px] font-bold">Ask Trelo</h2>
-        <p className="text-[12px]" style={{ color: c.onSurfaceVariant }}>Ask anything about your team's Slack conversations.</p>
+        <p className="text-[12px]" style={{ color: c.onSurfaceVariant }}>Ask inside one Slack channel at a time and inspect the messages behind the answer.</p>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); if (input.trim()) mutation.mutate(input.trim()); }}
-        className="flex gap-2 mb-6">
-        <input value={input} onChange={(e) => setInput(e.target.value)}
-          placeholder={isConnected ? "e.g. What did we decide about pricing last week?" : "Connect Slack first…"}
-          disabled={!isConnected || mutation.isPending}
-          className="flex-1 rounded-lg border px-3 py-2 text-[13px] outline-none focus:ring-2 disabled:bg-gray-50"
-          style={{ borderColor: c.outline }} />
-        <button type="submit" disabled={!isConnected || mutation.isPending || !input.trim()}
-          className="h-10 px-4 rounded-lg text-[12.5px] font-semibold text-white flex items-center gap-1.5 disabled:opacity-50"
-          style={{ background: "#000" }}>
-          {mutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={13} />}
-          Ask
-        </button>
-      </form>
+      <div className="grid lg:grid-cols-[260px_1fr] gap-4 items-start">
+        <aside className="rounded-xl border bg-white p-2 sticky top-20" style={{ borderColor: c.outline }}>
+          <div className="px-2 py-2 text-[10px] uppercase tracking-wider font-bold text-gray-500">Channels</div>
+          {channelsQuery.isLoading && <div className="px-2 py-3 text-[11px] text-gray-500">Loading channels…</div>}
+          <div className="space-y-1 max-h-[620px] overflow-auto pr-1">
+            {(channelsQuery.data ?? []).map((ch: SlackChannelRow) => {
+              const active = selectedChannelId === ch.slack_channel_id;
+              return (
+                <button key={ch.id} type="button" onClick={() => setSelectedChannelId(ch.slack_channel_id)}
+                  className="w-full text-left rounded-lg px-3 py-2 transition-colors"
+                  style={active ? { background: "#000", color: "#fff" } : { background: c.surfaceLow, color: c.onSurface }}>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Hash size={13} className="shrink-0" />
+                    <span className="text-[12px] font-bold truncate">{ch.name ?? ch.slack_channel_id}</span>
+                  </div>
+                  <div className="text-[10.5px] mt-1 opacity-70">{ch.messageCount ?? 0} messages</div>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
 
-      {mutation.isError && (
-        <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" }}>
-          {(mutation.error as Error)?.message ?? "Something went wrong."}
-        </div>
-      )}
+        <section className="min-w-0">
+          <div className="rounded-xl border bg-white p-4 mb-4" style={{ borderColor: c.outline }}>
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="min-w-0">
+                <div className="text-[10.5px] uppercase tracking-wider font-bold text-gray-500">Selected channel</div>
+                <div className="text-[16px] font-black truncate">#{selectedChannel?.name ?? "choose-a-channel"}</div>
+              </div>
+              <div className="text-[11px] text-gray-500 shrink-0">{selectedChannel?.messageCount ?? 0} indexed messages</div>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); if (input.trim()) mutation.mutate(input.trim()); }} className="flex gap-2">
+              <input value={input} onChange={(e) => setInput(e.target.value)}
+                placeholder={isConnected ? `Ask about #${selectedChannel?.name ?? "this channel"}…` : "Connect Slack first…"}
+                disabled={!isConnected || mutation.isPending || !selectedChannelId}
+                className="flex-1 rounded-lg border px-3 py-2 text-[13px] outline-none focus:ring-2 disabled:bg-gray-50"
+                style={{ borderColor: c.outline }} />
+              <button type="submit" disabled={!isConnected || mutation.isPending || !input.trim() || !selectedChannelId}
+                className="h-10 px-4 rounded-lg text-[12.5px] font-semibold text-white flex items-center gap-1.5 disabled:opacity-50"
+                style={{ background: "#000" }}>
+                {mutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={13} />}
+                Ask
+              </button>
+            </form>
+          </div>
 
-      {mutation.data && (
-        <AnswerCard question={lastQuestion || "Your question"} answer={mutation.data.answer} sources={mutation.data.sources} />
-      )}
+          {mutation.isError && (
+            <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" }}>
+              {(mutation.error as Error)?.message ?? "Something went wrong."}
+            </div>
+          )}
 
-      <div className="mt-6">
-        <h3 className="text-[12px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Recent</h3>
-        {historyQuery.isLoading && <div className="text-[12px] text-gray-500">Loading…</div>}
-        {historyQuery.data && historyQuery.data.length === 0 && (
-          <div className="text-[12px]" style={{ color: c.onSurfaceVariant }}>No questions yet.</div>
-        )}
-        <div className="space-y-3">
-          {historyQuery.data?.map((a: any) => (
-            <AnswerCard key={a.id} question={a.question} answer={a.answer_md} sources={a.sources ?? []} timestamp={a.created_at} />
-          ))}
-        </div>
+          {mutation.data && (
+            <AnswerCard question={lastQuestion || "Your question"} answer={mutation.data.answer} sources={mutation.data.sources} />
+          )}
+
+          <div className="grid xl:grid-cols-[1fr_360px] gap-4 mt-4">
+            <div>
+              <h3 className="text-[12px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Recent answers in this channel</h3>
+              {historyQuery.isLoading && <div className="text-[12px] text-gray-500">Loading…</div>}
+              {historyQuery.data && historyQuery.data.length === 0 && (
+                <div className="rounded-xl border bg-white p-6 text-[12px]" style={{ color: c.onSurfaceVariant, borderColor: c.outline }}>No questions for this channel yet.</div>
+              )}
+              <div className="space-y-3">
+                {historyQuery.data?.map((a: any) => (
+                  <AnswerCard key={a.id} question={a.question} answer={a.answer_md} sources={a.sources ?? []} timestamp={a.created_at} />
+                ))}
+              </div>
+            </div>
+            <ChannelMessagesPanel messages={messagesQuery.data ?? []} loading={messagesQuery.isLoading} />
+          </div>
+        </section>
       </div>
     </div>
+  );
+}
+
+function ChannelMessagesPanel({ messages, loading }: { messages: any[]; loading: boolean }) {
+  return (
+    <aside className="rounded-xl border bg-white p-4 max-h-[720px] overflow-auto" style={{ borderColor: c.outline }}>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Channel messages</h3>
+        <MessageSquare size={14} className="text-gray-400" />
+      </div>
+      {loading && <div className="text-[12px] text-gray-500">Loading messages…</div>}
+      {!loading && messages.length === 0 && <div className="text-[12px] text-gray-500">No messages indexed for this channel.</div>}
+      <div className="space-y-2">
+        {messages.map((m: any) => (
+          <a key={m.id} href={m.permalink ?? "#"} target="_blank" rel="noreferrer"
+            className="block rounded-lg border p-3 hover:bg-[#fafafa]" style={{ borderColor: c.surfaceMid }}>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="text-[11.5px] font-bold truncate">{m.slack_user_name ?? "Slack user"}</span>
+              <span className="text-[10px] text-gray-400 shrink-0">{formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}</span>
+            </div>
+            <div className="text-[11.5px] leading-relaxed text-gray-700 line-clamp-4">{m.text}</div>
+          </a>
+        ))}
+      </div>
+    </aside>
   );
 }
 
@@ -520,10 +625,15 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
   const toggleFn = useServerFn(toggleCommitment);
   const deleteFn = useServerFn(deleteCommitment);
   const createFn = useServerFn(createCommitment);
-  const [filter, setFilter] = useState<"all" | "open" | "done">("open");
+  const acceptFn = useServerFn(acceptCommitmentSuggestion);
+  const suggestFn = useServerFn(generateCommitmentSuggestions);
+  const channelsFn = useServerFn(listSlackChannels);
+  const [filter, setFilter] = useState<"suggested" | "open" | "done" | "all">("suggested");
   const [newTitle, setNewTitle] = useState("");
+  const [selectedChannelId, setSelectedChannelId] = useState<string>("all");
 
   const listQuery = useQuery({ queryKey: ["commitments"], queryFn: () => listFn() });
+  const channelsQuery = useQuery({ queryKey: ["slackChannels"], queryFn: () => channelsFn(), enabled: isConnected });
 
   const toggle = useMutation({
     mutationFn: (v: { id: string; done: boolean }) => toggleFn({ data: v }),
@@ -537,9 +647,17 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
     mutationFn: (title: string) => createFn({ data: { title } }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["commitments"] }); setNewTitle(""); },
   });
+  const accept = useMutation({
+    mutationFn: (id: string) => acceptFn({ data: { id } }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["commitments"] }); qc.invalidateQueries({ queryKey: ["dashboardMetrics"] }); },
+  });
+  const suggest = useMutation({
+    mutationFn: () => suggestFn({ data: { channelId: selectedChannelId === "all" ? undefined : selectedChannelId } }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["commitments"] }); qc.invalidateQueries({ queryKey: ["dashboardMetrics"] }); },
+  });
 
   const rows = (listQuery.data ?? []).filter((c: any) =>
-    filter === "all" ? true : filter === "open" ? c.status === "pending" : c.status === "done"
+    filter === "all" ? true : filter === "open" ? c.status === "pending" : c.status === filter
   );
 
   return (
@@ -548,19 +666,49 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
         <div>
           <h2 className="text-[20px] font-bold">Commitments</h2>
           <p className="text-[12px]" style={{ color: c.onSurfaceVariant }}>
-            {isConnected ? "Action items auto-detected from Slack + tasks you add." : "Connect Slack to auto-extract commitments."}
+            {isConnected ? "Review suggested tasks from Slack, approve the useful ones, or add your own." : "Connect Slack to suggest tasks from channels."}
           </p>
         </div>
         <div className="flex gap-1 rounded-lg border p-0.5 bg-white text-[11px]" style={{ borderColor: c.outline }}>
-          {(["open", "done", "all"] as const).map((f) => (
+          {(["suggested", "open", "done", "all"] as const).map((f) => (
             <button key={f} onClick={() => setFilter(f)}
               className="px-2.5 py-1 rounded-md font-semibold capitalize"
-              style={filter === f ? { background: "#000", color: "#fff" } : {}}>
-              {f}
+              style={filter === f ? { background: "#000", color: "#fff" } : { color: c.onSurface }}>
+              {f === "open" ? "Added" : f}
             </button>
           ))}
         </div>
       </div>
+
+      <div className="rounded-xl border bg-white p-3 mb-4 flex flex-col md:flex-row md:items-center gap-3" style={{ borderColor: c.outline }}>
+        <div className="flex-1 min-w-0">
+          <div className="text-[12px] font-bold flex items-center gap-2"><Sparkles size={14} /> Suggest tasks from Slack</div>
+          <div className="text-[11px] text-gray-500 mt-0.5">Choose a channel, generate suggestions, then add only what you want.</div>
+        </div>
+        <select value={selectedChannelId} onChange={(e) => setSelectedChannelId(e.target.value)}
+          className="h-9 rounded-lg border bg-white px-2 text-[12px] outline-none" style={{ borderColor: c.outline }}>
+          <option value="all">Top channels</option>
+          {(channelsQuery.data ?? []).map((ch: SlackChannelRow) => (
+            <option key={ch.id} value={ch.slack_channel_id}>#{ch.name ?? ch.slack_channel_id}</option>
+          ))}
+        </select>
+        <button type="button" onClick={() => suggest.mutate()} disabled={!isConnected || suggest.isPending}
+          className="h-9 px-3 rounded-lg text-[12px] font-semibold text-white flex items-center gap-1.5 disabled:opacity-50" style={{ background: "#000" }}>
+          {suggest.isPending ? <Loader2 size={13} className="animate-spin" /> : <ListPlus size={13} />}
+          Generate suggestions
+        </button>
+      </div>
+
+      {suggest.data && (
+        <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#f7f7f7", borderColor: c.outline, color: c.onSurface }}>
+          {suggest.data.message}
+        </div>
+      )}
+      {suggest.isError && (
+        <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" }}>
+          {(suggest.error as Error)?.message}
+        </div>
+      )}
 
       <form onSubmit={(e) => { e.preventDefault(); if (newTitle.trim()) create.mutate(newTitle.trim()); }}
         className="flex gap-2 mb-4">
@@ -588,12 +736,17 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
       <ul className="space-y-2">
         {rows.map((row: any) => (
           <li key={row.id} className="rounded-lg border p-3 bg-white flex items-start gap-3" style={{ borderColor: c.outline }}>
-            <input type="checkbox" checked={row.status === "done"}
-              onChange={(e) => toggle.mutate({ id: row.id, done: e.target.checked })}
-              className="mt-0.5 h-4 w-4" />
+            {row.status === "suggested" ? (
+              <div className="mt-0.5 w-4 h-4 rounded-full border grid place-items-center" style={{ borderColor: c.outline }}><Clock size={10} /></div>
+            ) : (
+              <input type="checkbox" checked={row.status === "done"}
+                onChange={(e) => toggle.mutate({ id: row.id, done: e.target.checked })}
+                className="mt-0.5 h-4 w-4" />
+            )}
             <div className="flex-1 min-w-0">
               <div className={`text-[13px] font-medium ${row.status === "done" ? "line-through text-gray-400" : ""}`}>{row.title}</div>
               <div className="text-[10.5px] text-gray-500 flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                {row.status === "suggested" && <span className="font-semibold text-gray-700">Suggested</span>}
                 {row.owner_name && <span>👤 {row.owner_name}</span>}
                 {row.due_date && <span>📅 {row.due_date}</span>}
                 {row.channel_name && <span>#{row.channel_name}</span>}
@@ -602,6 +755,11 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
                 )}
               </div>
             </div>
+            {row.status === "suggested" && (
+              <button onClick={() => accept.mutate(row.id)} className="px-2 py-1 rounded-md text-[11px] font-semibold text-white flex items-center gap-1" style={{ background: "#000" }}>
+                <Check size={12} /> Add
+              </button>
+            )}
             <button onClick={() => del.mutate(row.id)} className="p-1 text-gray-400 hover:text-red-500" title="Delete">
               <Trash2 size={13} />
             </button>
@@ -617,6 +775,7 @@ function DigestView({ isConnected }: { isConnected: boolean }) {
   const qc = useQueryClient();
   const listFn = useServerFn(listDigestEvents);
   const genFn = useServerFn(generateDigest);
+  const [openId, setOpenId] = useState<string | null>(null);
   const listQuery = useQuery({ queryKey: ["digest"], queryFn: () => listFn() });
   const gen = useMutation({
     mutationFn: () => genFn(),
@@ -661,13 +820,18 @@ function DigestView({ isConnected }: { isConnected: boolean }) {
 
       <div className="space-y-3">
         {listQuery.data?.map((d: any) => (
-          <div key={d.id} className="rounded-xl border p-4 bg-white" style={{ borderColor: c.outline }}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-gray-500">#{d.channel_name ?? "channel"}</div>
-              <div className="text-[10.5px] text-gray-400">{formatDistanceToNow(new Date(d.occurred_at), { addSuffix: true })}</div>
+          <button key={d.id} type="button" onClick={() => setOpenId(openId === d.id ? null : d.id)}
+            className="w-full text-left rounded-xl border p-4 bg-white hover:bg-[#fafafa] transition-colors" style={{ borderColor: c.outline }}>
+            <div className="flex items-center justify-between mb-2 gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                {openId === d.id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                <div className="text-[11px] uppercase tracking-wider font-semibold text-gray-500 truncate">#{d.channel_name ?? "channel"}</div>
+              </div>
+              <div className="text-[10.5px] text-gray-400 shrink-0">{formatDistanceToNow(new Date(d.occurred_at), { addSuffix: true })}</div>
             </div>
-            <div className="text-[12.5px] whitespace-pre-wrap leading-relaxed">{d.summary}</div>
-          </div>
+            <div className={`text-[12.5px] whitespace-pre-wrap leading-relaxed ${openId === d.id ? "" : "line-clamp-3"}`}>{d.summary}</div>
+            <div className="text-[10.5px] font-semibold mt-3 text-gray-500">{openId === d.id ? "Close" : "Open card"}</div>
+          </button>
         ))}
       </div>
     </div>
