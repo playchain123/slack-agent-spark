@@ -329,285 +329,275 @@ function TopBar({ collapsed, setCollapsed, onLogout, userEmail, userName }: {
 
 /* ---------- Dashboard View ---------- */
 function DashboardView({ isConnected, setView }: { isConnected: boolean; setView: (v: View) => void }) {
-  const metricsQuery = useQuery({
-    queryKey: ["dashboardMetrics"],
-    queryFn: () => getDashboardMetrics(),
-    enabled: isConnected,
-  });
+  const metricsQuery = useQuery({ queryKey: ["dashboardMetrics"], queryFn: () => getDashboardMetrics(), enabled: isConnected });
+  const digestQuery = useQuery({ queryKey: ["digest"], queryFn: () => useServerFnCall(listDigestEvents), enabled: isConnected });
+  const commitmentsQuery = useQuery({ queryKey: ["commitments"], queryFn: () => useServerFnCall(listCommitments), enabled: isConnected });
   const m = metricsQuery.data;
+  const digests = digestQuery.data ?? [];
+  const priority = (commitmentsQuery.data ?? []).filter((c: any) => c.status === "pending").slice(0, 4);
 
-  return (
-    <div className="p-6 max-w-[1440px] mx-auto">
-      <section className="mb-6">
-        <h2 className="text-[22px] font-bold leading-tight">Welcome to Trelo</h2>
-        <p className="mt-1 text-[12.5px] max-w-2xl" style={{ color: c.onSurfaceVariant }}>
-          {isConnected ? "Real-time signal from your Slack workspace." : "Connect your Slack workspace to see live activity."}
-        </p>
-      </section>
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const threadsIndexed = (m?.messages7d ?? 0);
+  const activeCommit = (m?.openCommitments ?? 0);
+  const answersProvided = m?.channels?.length ?? 0;
+  const timeSaved = Math.max(0, Math.round(threadsIndexed * 0.15));
 
-      {!isConnected && (
+  if (!isConnected) {
+    return (
+      <div className="p-6 max-w-[1440px] mx-auto">
         <div className="rounded-xl border p-10 flex flex-col items-center text-center" style={{ background: "#fff", borderColor: c.outline }}>
           <div className="w-12 h-12 rounded-xl grid place-items-center mb-3" style={{ background: c.surfaceMid }}><Sparkles size={20} /></div>
           <h3 className="text-[15px] font-semibold">Nothing to show yet</h3>
           <p className="text-[12px] mt-1 max-w-md" style={{ color: c.onSurfaceVariant }}>Connect Slack above to fill this dashboard.</p>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {isConnected && (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-            <MetricCard label="Messages (24h)" value={m?.messages24h ?? "—"} />
-            <MetricCard label="Messages (7d)" value={m?.messages7d ?? "—"} />
-            <MetricCard label="Suggested tasks" value={m?.suggestedCommitments ?? "—"} onClick={() => setView("commitments")} />
-            <MetricCard label="Open commitments" value={m?.openCommitments ?? "—"} onClick={() => setView("commitments")} />
-            <MetricCard label="Completed" value={m?.doneCommitments ?? "—"} onClick={() => setView("commitments")} />
+  return (
+    <div className="p-6 max-w-[1440px] mx-auto">
+      <section className="mb-6">
+        <h2 className="text-[26px] font-black leading-tight tracking-tight">{greeting}</h2>
+        <p className="mt-1 text-[13px] max-w-3xl" style={{ color: c.onSurfaceVariant }}>
+          Trelo has analyzed <b>{m?.messages24h ?? 0} new Slack threads</b> since you last checked. Review the daily digest below and act on your priority commitments.
+        </p>
+      </section>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <BigTile label="Threads Indexed" value={threadsIndexed.toLocaleString()} icon={<Hash size={14} />} />
+        <BigTile label="Active Commitments" value={activeCommit} icon={<CheckSquare size={14} />} onClick={() => setView("commitments")} />
+        <BigTile label="Answers Provided" value={answersProvided} icon={<MessageCircle size={14} />} onClick={() => setView("ask")} />
+        <BigTile label="Time Saved" value={`${timeSaved} hrs`} highlight icon={<Sparkles size={14} />} />
+      </div>
+
+      <div className="grid lg:grid-cols-[1.5fr_1fr] gap-4">
+        <section className="rounded-xl border bg-white p-4" style={{ borderColor: c.outline }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-[14px] font-bold">Daily Activity Digest</h3>
+            <button onClick={() => setView("digest")} className="text-[11px] font-semibold underline">View all threads ↗</button>
           </div>
+          {digests.length === 0 ? (
+            <EmptyLine text="No digest yet. Open Activity Digest to generate one." />
+          ) : (
+            <div className="space-y-3">
+              {digests.slice(0, 4).map((d: any) => (
+                <article key={d.id} className="rounded-lg border p-3" style={{ borderColor: c.surfaceMid, background: "#fafafa" }}>
+                  <div className="flex items-center justify-between gap-3 mb-1.5">
+                    <span className="text-[10.5px] font-bold px-2 py-0.5 rounded" style={{ background: "#000", color: "#fff" }}>#{d.channel_name ?? "channel"}</span>
+                    <span className="text-[10.5px] text-gray-500">{formatDistanceToNow(new Date(d.occurred_at), { addSuffix: true })}</span>
+                  </div>
+                  <div className="text-[12.5px] whitespace-pre-wrap leading-relaxed line-clamp-4">{d.summary}</div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
-          <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-4">
-            <Card title="Active channels">
-              {(m?.channels?.length ?? 0) === 0 ? (
-                <EmptyLine text="No channels indexed yet. Post in a channel your Trelo bot is in." />
-              ) : (
-                <div className="grid sm:grid-cols-2 gap-2">
-                  {m!.channels.map((ch: any) => {
-                    const teamId = (m as any)?.slackTeamId;
-                    const href = teamId
-                      ? `https://app.slack.com/client/${teamId}/${ch.slack_channel_id}`
-                      : null;
-                    return (
-                      <a key={ch.id} href={href ?? "#"} target={href ? "_blank" : undefined} rel="noreferrer"
-                        className="rounded-lg border p-3 bg-[#fafafa] hover:bg-white transition-colors min-h-[84px]"
-                        style={{ borderColor: c.surfaceMid }}>
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-[12px] font-bold truncate"><span className="text-gray-400">#</span>{ch.name ?? ch.slack_channel_id}</div>
-                          <ExternalLink size={12} className="text-gray-400 shrink-0" />
-                        </div>
-                        <div className="text-[20px] font-black leading-none mt-2">{ch.messageCount ?? 0}</div>
-                        <div className="text-[10.5px] text-gray-500 mt-1 line-clamp-1">{ch.latestMessage?.text ?? "No indexed message yet"}</div>
-                      </a>
-                    );
-                  })}
-                </div>
-
-              )}
-            </Card>
-            <Card title="Latest digest" action={<button onClick={() => setView("digest")} className="text-[11px] font-semibold underline">Open</button>}>
-              {(m?.latestDigest?.length ?? 0) === 0 ? (
-                <EmptyLine text="No digest generated yet. Open Activity Digest to run one." />
-              ) : (
-                <ul className="space-y-2">
-                  {m!.latestDigest.map((d: any) => (
-                    <li key={d.id} className="text-[12px]">
-                      <div className="font-semibold text-[11px] uppercase tracking-wide text-gray-500">#{d.channel_name}</div>
-                      <details className="group mt-1">
-                        <summary className="cursor-pointer list-none flex items-start gap-2">
-                          <ChevronRight size={13} className="mt-0.5 group-open:hidden shrink-0" />
-                          <ChevronDown size={13} className="mt-0.5 hidden group-open:block shrink-0" />
-                          <span className="line-clamp-2 group-open:line-clamp-none whitespace-pre-line">{d.summary}</span>
-                        </summary>
-                      </details>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
+        <aside className="space-y-4">
+          <div className="rounded-xl border bg-white p-4" style={{ borderColor: c.outline }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles size={14} />
+              <h3 className="text-[13px] font-bold">Quick Ask</h3>
+            </div>
+            <p className="text-[11.5px] mb-3" style={{ color: c.onSurfaceVariant }}>Ask anything about your team's conversations.</p>
+            <button onClick={() => setView("ask")} className="w-full h-9 rounded-lg text-[12px] font-semibold text-white" style={{ background: "#000" }}>
+              Ask Trelo →
+            </button>
           </div>
-        </>
-      )}
+          <div className="rounded-xl border bg-white p-4" style={{ borderColor: c.outline }}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[13px] font-bold flex items-center gap-2"><CheckSquare size={14} /> Priority Commitments</h3>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "#000", color: "#fff" }}>{priority.length}</span>
+            </div>
+            {priority.length === 0 ? (
+              <EmptyLine text="No pending commitments." />
+            ) : (
+              <ul className="space-y-2">
+                {priority.map((p: any) => (
+                  <li key={p.id} className="flex items-start gap-2 text-[12px]">
+                    <div className="mt-1 w-3.5 h-3.5 rounded border shrink-0" style={{ borderColor: c.outline }} />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold truncate">{p.title}</div>
+                      <div className="text-[10.5px] text-gray-500 flex gap-2 mt-0.5">
+                        {p.due_date && <span>📅 {p.due_date}</span>}
+                        {p.channel_name && <span>#{p.channel_name}</span>}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button onClick={() => setView("commitments")} className="mt-3 w-full h-8 rounded-md text-[11px] font-semibold border" style={{ borderColor: c.outline }}>
+              View all commitments
+            </button>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
 
-function MetricCard({ label, value, onClick }: { label: string; value: number | string; onClick?: () => void }) {
+// tiny helper — server fns are usually invoked via useServerFn hook, but here queryFn returns the promise directly.
+function useServerFnCall<T>(fn: () => Promise<T>): Promise<T> { return fn(); }
+
+function BigTile({ label, value, icon, onClick, highlight }: { label: string; value: number | string; icon?: React.ReactNode; onClick?: () => void; highlight?: boolean }) {
   return (
     <button onClick={onClick} disabled={!onClick}
-      className="text-left rounded-xl border p-4 bg-white disabled:cursor-default hover:shadow-sm transition-shadow"
-      style={{ borderColor: c.outline }}>
-      <div className="text-[10.5px] uppercase tracking-wider text-gray-500 font-semibold">{label}</div>
-      <div className="text-[26px] font-bold mt-1 leading-none">{value}</div>
+      className="text-left rounded-xl border p-4 disabled:cursor-default hover:shadow-sm transition-shadow"
+      style={{ borderColor: c.outline, background: highlight ? "#000" : "#fff", color: highlight ? "#fff" : c.onSurface }}>
+      <div className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-wider font-semibold" style={{ opacity: highlight ? 0.8 : 0.6 }}>
+        {icon} {label}
+      </div>
+      <div className="text-[28px] font-black mt-2 leading-none">{value}</div>
     </button>
   );
 }
 
-function Card({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border p-4 bg-white" style={{ borderColor: c.outline }}>
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="text-[13px] font-semibold">{title}</h4>
-        {action}
-      </div>
-      {children}
-    </div>
-  );
-}
 function EmptyLine({ text }: { text: string }) {
   return <div className="text-[11.5px]" style={{ color: c.onSurfaceVariant }}>{text}</div>;
 }
 
 /* ---------- Ask Trelo ---------- */
+const EXAMPLES = [
+  "What's the status of the latest deployment?",
+  "Any blockers reported today?",
+  "Who is working on the payment integration?",
+  "Summarize decisions from this week",
+];
+
 function AskView({ isConnected }: { isConnected: boolean }) {
   const qc = useQueryClient();
   const askFn = useServerFn(askTrelo);
   const listAnswersFn = useServerFn(listRecentAnswers);
-  const channelsFn = useServerFn(listSlackChannels);
-  const messagesFn = useServerFn(listChannelMessages);
   const [input, setInput] = useState("");
   const [lastQuestion, setLastQuestion] = useState("");
-  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
-  const channelsQuery = useQuery({ queryKey: ["slackChannels"], queryFn: () => channelsFn(), enabled: isConnected });
-  const selectedChannel = (channelsQuery.data ?? []).find((ch: SlackChannelRow) => ch.slack_channel_id === selectedChannelId) ?? null;
+
   const historyQuery = useQuery({
-    queryKey: ["answers", selectedChannelId],
-    queryFn: () => listAnswersFn({ data: { channelId: selectedChannelId ?? undefined } }),
+    queryKey: ["answers", "all"],
+    queryFn: () => listAnswersFn({ data: {} }),
     enabled: isConnected,
   });
-  const messagesQuery = useQuery({
-    queryKey: ["channelMessages", selectedChannelId],
-    queryFn: () => messagesFn({ data: { channelId: selectedChannelId!, limit: 40 } }),
-    enabled: isConnected && Boolean(selectedChannelId),
-  });
-
-  useEffect(() => {
-    if (!selectedChannelId && channelsQuery.data && channelsQuery.data.length > 0) {
-      setSelectedChannelId(channelsQuery.data[0].slack_channel_id);
-    }
-  }, [channelsQuery.data, selectedChannelId]);
 
   const mutation = useMutation({
-    mutationFn: (question: string) => {
-      setLastQuestion(question);
-      return askFn({ data: { question, channelId: selectedChannelId ?? undefined } });
-    },
+    mutationFn: (question: string) => { setLastQuestion(question); return askFn({ data: { question } }); },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["answers"] }); setInput(""); },
   });
 
+  const answers = historyQuery.data ?? [];
+  const trending = answers.slice(0, 3);
+
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-4">
-        <h2 className="text-[20px] font-bold">Ask Trelo</h2>
-        <p className="text-[12px]" style={{ color: c.onSurfaceVariant }}>Ask inside one Slack channel at a time and inspect the messages behind the answer.</p>
-      </div>
-
-      <div className="grid lg:grid-cols-[260px_1fr] gap-4 items-start">
-        <aside className="rounded-xl border bg-white p-2 sticky top-20" style={{ borderColor: c.outline }}>
-          <div className="px-2 py-2 text-[10px] uppercase tracking-wider font-bold text-gray-500">Channels</div>
-          {channelsQuery.isLoading && <div className="px-2 py-3 text-[11px] text-gray-500">Loading channels…</div>}
-          <div className="space-y-1 max-h-[620px] overflow-auto pr-1">
-            {(channelsQuery.data ?? []).map((ch: SlackChannelRow) => {
-              const active = selectedChannelId === ch.slack_channel_id;
-              return (
-                <button key={ch.id} type="button" onClick={() => setSelectedChannelId(ch.slack_channel_id)}
-                  className="w-full text-left rounded-lg px-3 py-2 transition-colors"
-                  style={active ? { background: "#000", color: "#fff" } : { background: c.surfaceLow, color: c.onSurface }}>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Hash size={13} className="shrink-0" />
-                    <span className="text-[12px] font-bold truncate">{ch.name ?? ch.slack_channel_id}</span>
-                  </div>
-                  <div className="text-[10.5px] mt-1 opacity-70">{ch.messageCount ?? 0} messages</div>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
-
+    <div className="p-6 max-w-[1440px] mx-auto">
+      <div className="grid lg:grid-cols-[1fr_320px] gap-6">
         <section className="min-w-0">
-          <div className="rounded-xl border bg-white p-4 mb-4" style={{ borderColor: c.outline }}>
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="min-w-0">
-                <div className="text-[10.5px] uppercase tracking-wider font-bold text-gray-500">Selected channel</div>
-                <div className="text-[16px] font-black truncate">#{selectedChannel?.name ?? "choose-a-channel"}</div>
-              </div>
-              <div className="text-[11px] text-gray-500 shrink-0">{selectedChannel?.messageCount ?? 0} indexed messages</div>
-            </div>
-            <form onSubmit={(e) => { e.preventDefault(); if (input.trim()) mutation.mutate(input.trim()); }} className="flex gap-2">
+          <div className="text-center pt-4 pb-6">
+            <h2 className="text-[28px] font-black tracking-tight">How can I help you today?</h2>
+            <p className="text-[13px] mt-2" style={{ color: c.onSurfaceVariant }}>
+              Access your team's collective intelligence across every Slack conversation.
+            </p>
+          </div>
+
+          <form onSubmit={(e) => { e.preventDefault(); if (input.trim()) mutation.mutate(input.trim()); }}
+            className="max-w-2xl mx-auto">
+            <div className="flex gap-2 rounded-full border bg-white p-1.5 shadow-sm" style={{ borderColor: c.outline }}>
+              <div className="pl-3 grid place-items-center"><Sparkles size={16} /></div>
               <input value={input} onChange={(e) => setInput(e.target.value)}
-                placeholder={isConnected ? `Ask about #${selectedChannel?.name ?? "this channel"}…` : "Connect Slack first…"}
-                disabled={!isConnected || mutation.isPending || !selectedChannelId}
-                className="flex-1 rounded-lg border px-3 py-2 text-[13px] outline-none focus:ring-2 disabled:bg-gray-50"
-                style={{ borderColor: c.outline }} />
-              <button type="submit" disabled={!isConnected || mutation.isPending || !input.trim() || !selectedChannelId}
-                className="h-10 px-4 rounded-lg text-[12.5px] font-semibold text-white flex items-center gap-1.5 disabled:opacity-50"
+                placeholder={isConnected ? "Ask anything your team has discussed in Slack…" : "Connect Slack first…"}
+                disabled={!isConnected || mutation.isPending}
+                className="flex-1 bg-transparent px-2 py-2 text-[13.5px] outline-none" />
+              <button type="submit" disabled={!isConnected || mutation.isPending || !input.trim()}
+                className="h-10 px-5 rounded-full text-[12.5px] font-semibold text-white flex items-center gap-1.5 disabled:opacity-50"
                 style={{ background: "#000" }}>
                 {mutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={13} />}
-                Ask
+                Search
               </button>
-            </form>
-          </div>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3 justify-center">
+              <span className="text-[11px] text-gray-500 self-center">Try asking:</span>
+              {EXAMPLES.map((ex) => (
+                <button key={ex} type="button" onClick={() => setInput(ex)}
+                  className="text-[11.5px] px-2.5 py-1 rounded-full border hover:bg-gray-50" style={{ borderColor: c.outline }}>
+                  "{ex}"
+                </button>
+              ))}
+            </div>
+          </form>
 
           {mutation.isError && (
-            <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" }}>
+            <div className="mt-6 rounded-lg border p-3 text-[12px] max-w-2xl mx-auto" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" }}>
               {(mutation.error as Error)?.message ?? "Something went wrong."}
             </div>
           )}
 
           {mutation.data && (
-            <AnswerCard question={lastQuestion || "Your question"} answer={mutation.data.answer} sources={mutation.data.sources} />
+            <div className="mt-6 max-w-3xl mx-auto">
+              <AnswerCard question={lastQuestion || "Your question"} answer={mutation.data.answer} sources={mutation.data.sources} />
+            </div>
           )}
 
-          <div className="grid xl:grid-cols-[1fr_360px] gap-4 mt-4">
-            <div>
-              <h3 className="text-[12px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Recent answers in this channel</h3>
-              {historyQuery.isLoading && <div className="text-[12px] text-gray-500">Loading…</div>}
-              {historyQuery.data && historyQuery.data.length === 0 && (
-                <div className="rounded-xl border bg-white p-6 text-[12px]" style={{ color: c.onSurfaceVariant, borderColor: c.outline }}>No questions for this channel yet.</div>
-              )}
-              <div className="space-y-3">
-                {historyQuery.data?.map((a: any) => (
-                  <AnswerCard key={a.id} question={a.question} answer={a.answer_md} sources={a.sources ?? []} timestamp={a.created_at} />
-                ))}
-              </div>
+          <div className="mt-10">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-[14px] font-bold">Recent Answers</h3>
+              <span className="text-[11px] text-gray-500">Across all channels</span>
             </div>
-            <ChannelMessagesPanel messages={messagesQuery.data ?? []} loading={messagesQuery.isLoading} />
+            {historyQuery.isLoading && <div className="text-[12px] text-gray-500">Loading…</div>}
+            {!historyQuery.isLoading && answers.length === 0 && (
+              <div className="rounded-xl border bg-white p-6 text-[12px] text-center" style={{ color: c.onSurfaceVariant, borderColor: c.outline }}>
+                No questions asked yet. Try one of the examples above.
+              </div>
+            )}
+            <div className="grid md:grid-cols-2 gap-3">
+              {answers.map((a: any) => (
+                <AnswerCard key={a.id} question={a.question} answer={a.answer_md} sources={a.sources ?? []} timestamp={a.created_at} compact />
+              ))}
+            </div>
           </div>
         </section>
+
+        <aside className="space-y-4">
+          <div className="rounded-xl border bg-white p-4" style={{ borderColor: c.outline }}>
+            <h3 className="text-[13px] font-bold mb-3 flex items-center gap-2">📈 Trending Now</h3>
+            {trending.length === 0 ? (
+              <div className="text-[11.5px] text-gray-500">No recent questions yet.</div>
+            ) : (
+              <ul className="space-y-3">
+                {trending.map((t: any) => (
+                  <li key={t.id}>
+                    <div className="text-[10.5px] uppercase tracking-wider font-semibold text-gray-500">Recent</div>
+                    <div className="text-[12px] font-semibold line-clamp-2 mt-0.5">{t.question}</div>
+                    <div className="text-[10.5px] text-gray-500 mt-0.5">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="rounded-xl border p-4" style={{ borderColor: c.outline, background: "#000", color: "#fff" }}>
+            <div className="flex items-center gap-2 mb-1.5"><Sparkles size={14} /><h3 className="text-[13px] font-bold">Power Tip</h3></div>
+            <p className="text-[11.5px] opacity-80">Mention <code className="px-1 rounded" style={{ background: "#333" }}>@trelo</code> in any Slack channel to get answers right in the thread.</p>
+          </div>
+        </aside>
       </div>
     </div>
   );
 }
 
-function ChannelMessagesPanel({ messages, loading }: { messages: any[]; loading: boolean }) {
-  return (
-    <aside className="rounded-xl border bg-white p-4 max-h-[720px] overflow-auto" style={{ borderColor: c.outline }}>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Channel messages</h3>
-        <MessageSquare size={14} className="text-gray-400" />
-      </div>
-      {loading && <div className="text-[12px] text-gray-500">Loading messages…</div>}
-      {!loading && messages.length === 0 && <div className="text-[12px] text-gray-500">No messages indexed for this channel.</div>}
-      <div className="space-y-2">
-        {messages.map((m: any) => (
-          <a key={m.id} href={m.permalink ?? "#"} target="_blank" rel="noreferrer"
-            className="block rounded-lg border p-3 hover:bg-[#fafafa]" style={{ borderColor: c.surfaceMid }}>
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <span className="text-[11.5px] font-bold truncate">{m.slack_user_name ?? "Slack user"}</span>
-              <span className="text-[10px] text-gray-400 shrink-0">{formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}</span>
-            </div>
-            <div className="text-[11.5px] leading-relaxed text-gray-700 line-clamp-4">{m.text}</div>
-          </a>
-        ))}
-      </div>
-    </aside>
-  );
-}
-
-function AnswerCard({ question, answer, sources, timestamp }: { question: string; answer: string; sources: any[]; timestamp?: string }) {
+function AnswerCard({ question, answer, sources, timestamp, compact }: { question: string; answer: string; sources: any[]; timestamp?: string; compact?: boolean }) {
   return (
     <div className="rounded-xl border p-4 bg-white" style={{ borderColor: c.outline }}>
       <div className="flex items-start gap-2 mb-2">
-        <MessageCircle size={14} className="mt-0.5 text-gray-500" />
+        <MessageCircle size={14} className="mt-0.5 text-gray-500 shrink-0" />
         <div className="text-[12.5px] font-semibold">{question}</div>
       </div>
-      <div className="text-[13px] whitespace-pre-wrap leading-relaxed" style={{ color: c.onSurface }}>{answer}</div>
+      <div className={`text-[12.5px] whitespace-pre-wrap leading-relaxed ${compact ? "line-clamp-4" : ""}`} style={{ color: c.onSurface }}>{answer}</div>
       {timestamp && <div className="text-[10px] text-gray-400 mt-2">{formatDistanceToNow(new Date(timestamp), { addSuffix: true })}</div>}
       {sources?.length > 0 && (
         <div className="mt-3 pt-3 border-t" style={{ borderColor: c.surfaceMid }}>
-          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Sources</div>
+          <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">{sources.length} source{sources.length === 1 ? "" : "s"}</div>
           <div className="space-y-1">
-            {sources.slice(0, 5).map((s: any) => (
-              <a key={s.index} href={s.permalink ?? "#"} target="_blank" rel="noreferrer"
-                className="block text-[11.5px] hover:underline">
-                <span className="text-gray-400">[{s.index}]</span> <span className="font-semibold">#{s.channel ?? "channel"}</span>
-                {" — "}<span className="text-gray-600">{s.user}</span>: <span className="text-gray-700">{s.text}</span>
+            {sources.slice(0, compact ? 2 : 5).map((s: any) => (
+              <a key={s.index} href={s.permalink ?? "#"} target="_blank" rel="noreferrer" className="block text-[11px] hover:underline truncate">
+                <span className="text-gray-400">[{s.index}]</span> <span className="font-semibold">#{s.channel ?? "channel"}</span> — <span className="text-gray-600">{s.text}</span>
                 {s.permalink && <ExternalLink size={10} className="inline ml-1" />}
               </a>
             ))}
@@ -627,145 +617,152 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
   const createFn = useServerFn(createCommitment);
   const acceptFn = useServerFn(acceptCommitmentSuggestion);
   const suggestFn = useServerFn(generateCommitmentSuggestions);
-  const channelsFn = useServerFn(listSlackChannels);
-  const [filter, setFilter] = useState<"suggested" | "open" | "done" | "all">("suggested");
   const [newTitle, setNewTitle] = useState("");
-  const [selectedChannelId, setSelectedChannelId] = useState<string>("all");
+  const [completedOpen, setCompletedOpen] = useState(false);
 
   const listQuery = useQuery({ queryKey: ["commitments"], queryFn: () => listFn() });
-  const channelsQuery = useQuery({ queryKey: ["slackChannels"], queryFn: () => channelsFn(), enabled: isConnected });
 
-  const toggle = useMutation({
-    mutationFn: (v: { id: string; done: boolean }) => toggleFn({ data: v }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["commitments"] }),
-  });
-  const del = useMutation({
-    mutationFn: (id: string) => deleteFn({ data: { id } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["commitments"] }),
-  });
-  const create = useMutation({
-    mutationFn: (title: string) => createFn({ data: { title } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["commitments"] }); setNewTitle(""); },
-  });
-  const accept = useMutation({
-    mutationFn: (id: string) => acceptFn({ data: { id } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["commitments"] }); qc.invalidateQueries({ queryKey: ["dashboardMetrics"] }); },
-  });
-  const suggest = useMutation({
-    mutationFn: () => suggestFn({ data: { channelId: selectedChannelId === "all" ? undefined : selectedChannelId } }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["commitments"] }); qc.invalidateQueries({ queryKey: ["dashboardMetrics"] }); },
-  });
+  const toggle = useMutation({ mutationFn: (v: { id: string; done: boolean }) => toggleFn({ data: v }), onSuccess: () => qc.invalidateQueries({ queryKey: ["commitments"] }) });
+  const del = useMutation({ mutationFn: (id: string) => deleteFn({ data: { id } }), onSuccess: () => qc.invalidateQueries({ queryKey: ["commitments"] }) });
+  const create = useMutation({ mutationFn: (title: string) => createFn({ data: { title } }), onSuccess: () => { qc.invalidateQueries({ queryKey: ["commitments"] }); setNewTitle(""); } });
+  const accept = useMutation({ mutationFn: (id: string) => acceptFn({ data: { id } }), onSuccess: () => qc.invalidateQueries({ queryKey: ["commitments"] }) });
+  const suggest = useMutation({ mutationFn: () => suggestFn({ data: {} }), onSuccess: () => qc.invalidateQueries({ queryKey: ["commitments"] }) });
 
-  const rows = (listQuery.data ?? []).filter((c: any) =>
-    filter === "all" ? true : filter === "open" ? c.status === "pending" : c.status === filter
-  );
+  const all = listQuery.data ?? [];
+  const now = Date.now();
+  const overdue = all.filter((c: any) => c.status === "pending" && c.due_date && new Date(c.due_date).getTime() < now).slice(0, 3);
+  const pending = all.filter((c: any) => c.status === "pending" && !overdue.some((o: any) => o.id === c.id));
+  const suggested = all.filter((c: any) => c.status === "suggested");
+  const done = all.filter((c: any) => c.status === "done");
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-[1440px] mx-auto">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-[20px] font-bold">Commitments</h2>
-          <p className="text-[12px]" style={{ color: c.onSurfaceVariant }}>
-            {isConnected ? "Review suggested tasks from Slack, approve the useful ones, or add your own." : "Connect Slack to suggest tasks from channels."}
-          </p>
+          <h2 className="text-[22px] font-black">Commitments</h2>
+          <p className="text-[12.5px]" style={{ color: c.onSurfaceVariant }}>Action items extracted from your Slack conversations by Trelo AI.</p>
         </div>
-        <div className="flex gap-1 rounded-lg border p-0.5 bg-white text-[11px]" style={{ borderColor: c.outline }}>
-          {(["suggested", "open", "done", "all"] as const).map((f) => (
-            <button key={f} onClick={() => setFilter(f)}
-              className="px-2.5 py-1 rounded-md font-semibold capitalize"
-              style={filter === f ? { background: "#000", color: "#fff" } : { color: c.onSurface }}>
-              {f === "open" ? "Added" : f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-xl border bg-white p-3 mb-4 flex flex-col md:flex-row md:items-center gap-3" style={{ borderColor: c.outline }}>
-        <div className="flex-1 min-w-0">
-          <div className="text-[12px] font-bold flex items-center gap-2"><Sparkles size={14} /> Suggest tasks from Slack</div>
-          <div className="text-[11px] text-gray-500 mt-0.5">Choose a channel, generate suggestions, then add only what you want.</div>
-        </div>
-        <select value={selectedChannelId} onChange={(e) => setSelectedChannelId(e.target.value)}
-          className="h-9 rounded-lg border bg-white px-2 text-[12px] outline-none" style={{ borderColor: c.outline }}>
-          <option value="all">Top channels</option>
-          {(channelsQuery.data ?? []).map((ch: SlackChannelRow) => (
-            <option key={ch.id} value={ch.slack_channel_id}>#{ch.name ?? ch.slack_channel_id}</option>
-          ))}
-        </select>
-        <button type="button" onClick={() => suggest.mutate()} disabled={!isConnected || suggest.isPending}
+        <button onClick={() => suggest.mutate()} disabled={!isConnected || suggest.isPending}
           className="h-9 px-3 rounded-lg text-[12px] font-semibold text-white flex items-center gap-1.5 disabled:opacity-50" style={{ background: "#000" }}>
-          {suggest.isPending ? <Loader2 size={13} className="animate-spin" /> : <ListPlus size={13} />}
-          Generate suggestions
+          {suggest.isPending ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+          Suggest from Slack
         </button>
       </div>
 
-      {suggest.data && (
-        <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#f7f7f7", borderColor: c.outline, color: c.onSurface }}>
-          {suggest.data.message}
-        </div>
-      )}
-      {suggest.isError && (
-        <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" }}>
-          {(suggest.error as Error)?.message}
-        </div>
+      {overdue.length > 0 && (
+        <section className="mb-6">
+          <h3 className="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-2 flex items-center gap-2">
+            <span className="w-4 h-4 rounded-full grid place-items-center text-white text-[9px] font-black" style={{ background: "#000" }}>!</span>
+            OVERDUE ACTIONS <span className="text-[10px] px-1.5 rounded-full font-bold" style={{ background: "#000", color: "#fff" }}>{overdue.length}</span>
+          </h3>
+          <div className="grid md:grid-cols-3 gap-3">
+            {overdue.map((row: any) => (
+              <div key={row.id} className="rounded-xl border p-4 bg-white border-l-4" style={{ borderColor: c.outline, borderLeftColor: "#000" }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#000", color: "#fff" }}>OVERDUE</span>
+                  <span className="text-[10.5px] text-gray-500">{formatDistanceToNow(new Date(row.due_date), { addSuffix: true })}</span>
+                </div>
+                <div className="text-[13px] font-bold mb-1">{row.title}</div>
+                {row.channel_name && <div className="text-[10.5px] text-gray-500 mb-2">#{row.channel_name}</div>}
+                <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: c.surfaceMid }}>
+                  <span className="text-[11px] text-gray-600">{row.owner_name ?? "Unassigned"}</span>
+                  <button onClick={() => toggle.mutate({ id: row.id, done: true })} className="text-[10.5px] font-semibold underline">Mark done</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
-      <form onSubmit={(e) => { e.preventDefault(); if (newTitle.trim()) create.mutate(newTitle.trim()); }}
-        className="flex gap-2 mb-4">
+      <form onSubmit={(e) => { e.preventDefault(); if (newTitle.trim()) create.mutate(newTitle.trim()); }} className="flex gap-2 mb-4">
         <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a task manually…"
-          className="flex-1 rounded-lg border px-3 py-2 text-[12.5px] outline-none focus:ring-2"
-          style={{ borderColor: c.outline }} />
+          className="flex-1 rounded-lg border px-3 py-2 text-[12.5px] outline-none focus:ring-2" style={{ borderColor: c.outline }} />
         <button type="submit" disabled={create.isPending || !newTitle.trim()}
           className="h-10 px-3 rounded-lg text-[12px] font-semibold text-white disabled:opacity-50" style={{ background: "#000" }}>
           <Plus size={14} className="inline" /> Add
         </button>
       </form>
 
-      {listQuery.isLoading && <div className="text-[12px] text-gray-500">Loading…</div>}
-      {rows.length === 0 && !listQuery.isLoading && (
-        <div className="rounded-xl border p-8 bg-white text-center" style={{ borderColor: c.outline }}>
-          <CheckSquare size={24} className="mx-auto text-gray-300 mb-2" />
-          <div className="text-[13px] font-semibold">No {filter === "all" ? "" : filter} commitments</div>
-          <div className="text-[11.5px] text-gray-500 mt-1">
-            {isConnected ? "Trelo will surface tasks as your team commits to things in Slack." : "Connect Slack to auto-detect."}
-          </div>
-        </div>
+      {suggested.length > 0 && (
+        <section className="mb-6">
+          <h3 className="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-2 flex items-center gap-2">
+            <Sparkles size={12} /> SUGGESTED <span className="text-[10px] px-1.5 rounded-full font-bold border" style={{ borderColor: c.outline }}>{suggested.length}</span>
+          </h3>
+          <ul className="space-y-2">
+            {suggested.map((row: any) => (
+              <li key={row.id} className="rounded-lg border p-3 bg-white flex items-start gap-3" style={{ borderColor: c.outline }}>
+                <Clock size={13} className="mt-1 text-gray-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-medium">{row.title}</div>
+                  <div className="text-[10.5px] text-gray-500 flex flex-wrap gap-x-3 mt-0.5">
+                    {row.channel_name && <span>#{row.channel_name}</span>}
+                    {row.source_permalink && <a href={row.source_permalink} target="_blank" rel="noreferrer" className="underline">source ↗</a>}
+                  </div>
+                </div>
+                <button onClick={() => accept.mutate(row.id)} className="px-2 py-1 rounded-md text-[11px] font-semibold text-white flex items-center gap-1" style={{ background: "#000" }}>
+                  <Check size={12} /> Add
+                </button>
+                <button onClick={() => del.mutate(row.id)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={13} /></button>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      <ul className="space-y-2">
-        {rows.map((row: any) => (
-          <li key={row.id} className="rounded-lg border p-3 bg-white flex items-start gap-3" style={{ borderColor: c.outline }}>
-            {row.status === "suggested" ? (
-              <div className="mt-0.5 w-4 h-4 rounded-full border grid place-items-center" style={{ borderColor: c.outline }}><Clock size={10} /></div>
-            ) : (
-              <input type="checkbox" checked={row.status === "done"}
-                onChange={(e) => toggle.mutate({ id: row.id, done: e.target.checked })}
-                className="mt-0.5 h-4 w-4" />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className={`text-[13px] font-medium ${row.status === "done" ? "line-through text-gray-400" : ""}`}>{row.title}</div>
-              <div className="text-[10.5px] text-gray-500 flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
-                {row.status === "suggested" && <span className="font-semibold text-gray-700">Suggested</span>}
-                {row.owner_name && <span>👤 {row.owner_name}</span>}
-                {row.due_date && <span>📅 {row.due_date}</span>}
-                {row.channel_name && <span>#{row.channel_name}</span>}
-                {row.source_permalink && (
-                  <a href={row.source_permalink} target="_blank" rel="noreferrer" className="underline">source ↗</a>
-                )}
+      <section className="mb-6">
+        <h3 className="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-2 flex items-center gap-2">
+          PENDING COMMITMENTS <span className="text-[10px] px-1.5 rounded-full font-bold border" style={{ borderColor: c.outline }}>{pending.length}</span>
+        </h3>
+        {listQuery.isLoading && <div className="text-[12px] text-gray-500">Loading…</div>}
+        {pending.length === 0 && !listQuery.isLoading && (
+          <div className="rounded-xl border p-8 bg-white text-center" style={{ borderColor: c.outline }}>
+            <CheckSquare size={24} className="mx-auto text-gray-300 mb-2" />
+            <div className="text-[13px] font-semibold">No pending commitments</div>
+          </div>
+        )}
+        <ul className="space-y-2">
+          {pending.map((row: any) => (
+            <li key={row.id} className="rounded-lg border p-3 bg-white flex items-center gap-3" style={{ borderColor: c.outline }}>
+              <input type="checkbox" checked={false} onChange={(e) => toggle.mutate({ id: row.id, done: e.target.checked })} className="h-4 w-4" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold truncate">{row.title}</div>
+                <div className="text-[10.5px] text-gray-500 flex flex-wrap gap-x-3 mt-0.5">
+                  {row.channel_name && <span>#{row.channel_name}</span>}
+                  {row.due_date && <span>📅 {row.due_date}</span>}
+                  {row.owner_name && <span>👤 {row.owner_name}</span>}
+                </div>
               </div>
-            </div>
-            {row.status === "suggested" && (
-              <button onClick={() => accept.mutate(row.id)} className="px-2 py-1 rounded-md text-[11px] font-semibold text-white flex items-center gap-1" style={{ background: "#000" }}>
-                <Check size={12} /> Add
-              </button>
-            )}
-            <button onClick={() => del.mutate(row.id)} className="p-1 text-gray-400 hover:text-red-500" title="Delete">
-              <Trash2 size={13} />
-            </button>
-          </li>
-        ))}
-      </ul>
+              <span className="text-[10px] font-bold px-2 py-1 rounded border" style={{ borderColor: c.outline }}>To Do</span>
+              {row.source_permalink && (
+                <a href={row.source_permalink} target="_blank" rel="noreferrer" className="p-1 text-gray-400 hover:text-black" title="Open in Slack">
+                  <ExternalLink size={13} />
+                </a>
+              )}
+              <button onClick={() => del.mutate(row.id)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={13} /></button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <button onClick={() => setCompletedOpen(!completedOpen)} className="text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-2 flex items-center gap-2">
+          {completedOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          COMPLETED TASKS ({done.length})
+        </button>
+        {completedOpen && (
+          <ul className="space-y-2">
+            {done.map((row: any) => (
+              <li key={row.id} className="rounded-lg border p-3 bg-white flex items-center gap-3 opacity-60" style={{ borderColor: c.outline }}>
+                <input type="checkbox" checked onChange={(e) => toggle.mutate({ id: row.id, done: e.target.checked })} className="h-4 w-4" />
+                <div className="flex-1 min-w-0 text-[12.5px] line-through truncate">{row.title}</div>
+                <span className="text-[10px] font-bold px-2 py-1 rounded" style={{ background: c.surfaceMid }}>Done</span>
+                <button onClick={() => del.mutate(row.id)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={13} /></button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
@@ -775,64 +772,138 @@ function DigestView({ isConnected }: { isConnected: boolean }) {
   const qc = useQueryClient();
   const listFn = useServerFn(listDigestEvents);
   const genFn = useServerFn(generateDigest);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [range, setRange] = useState<"today" | "yesterday" | "week">("today");
+  const [channelFilter, setChannelFilter] = useState<string>("all");
   const listQuery = useQuery({ queryKey: ["digest"], queryFn: () => listFn() });
-  const gen = useMutation({
-    mutationFn: () => genFn(),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["digest"] }),
+  const gen = useMutation({ mutationFn: () => genFn(), onSuccess: () => qc.invalidateQueries({ queryKey: ["digest"] }) });
+
+  const all = listQuery.data ?? [];
+  const now = Date.now();
+  const filtered = all.filter((d: any) => {
+    const t = new Date(d.occurred_at).getTime();
+    if (range === "today" && now - t > 24 * 3600 * 1000) return false;
+    if (range === "yesterday") {
+      const age = now - t;
+      if (age < 24 * 3600 * 1000 || age > 48 * 3600 * 1000) return false;
+    }
+    if (range === "week" && now - t > 7 * 24 * 3600 * 1000) return false;
+    if (channelFilter !== "all" && d.channel_name !== channelFilter) return false;
+    return true;
   });
 
+  const channelSet = Array.from(new Set(all.map((d: any) => d.channel_name).filter(Boolean))) as string[];
+  const participantCount = new Set(all.flatMap((d: any) => (d.summary?.match(/@\w+/g) ?? []))).size;
+  const topChannels = channelSet.slice(0, 4).map((name) => ({
+    name,
+    count: all.filter((d: any) => d.channel_name === name).length,
+  }));
+
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="mb-4 flex items-start justify-between">
-        <div>
-          <h2 className="text-[20px] font-bold">Activity Digest</h2>
-          <p className="text-[12px]" style={{ color: c.onSurfaceVariant }}>AI summaries of your team's Slack activity.</p>
-        </div>
-        <button onClick={() => gen.mutate()} disabled={!isConnected || gen.isPending}
-          className="h-9 px-3 rounded-lg text-[12px] font-semibold text-white flex items-center gap-1.5 disabled:opacity-50" style={{ background: "#000" }}>
-          {gen.isPending ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-          Generate now
-        </button>
-      </div>
-
-      {gen.data && (
-        <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#f0fdf4", borderColor: "#bbf7d0", color: "#166534" }}>
-          {gen.data.message}
-        </div>
-      )}
-      {gen.isError && (
-        <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" }}>
-          {(gen.error as Error)?.message}
-        </div>
-      )}
-
-      {listQuery.isLoading && <div className="text-[12px] text-gray-500">Loading…</div>}
-      {listQuery.data && listQuery.data.length === 0 && !listQuery.isLoading && (
-        <div className="rounded-xl border p-8 bg-white text-center" style={{ borderColor: c.outline }}>
-          <Newspaper size={24} className="mx-auto text-gray-300 mb-2" />
-          <div className="text-[13px] font-semibold">No digests yet</div>
-          <div className="text-[11.5px] text-gray-500 mt-1">
-            {isConnected ? "Click Generate now to build one from the last 24h of Slack activity." : "Connect Slack first."}
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {listQuery.data?.map((d: any) => (
-          <button key={d.id} type="button" onClick={() => setOpenId(openId === d.id ? null : d.id)}
-            className="w-full text-left rounded-xl border p-4 bg-white hover:bg-[#fafafa] transition-colors" style={{ borderColor: c.outline }}>
-            <div className="flex items-center justify-between mb-2 gap-3">
-              <div className="flex items-center gap-2 min-w-0">
-                {openId === d.id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                <div className="text-[11px] uppercase tracking-wider font-semibold text-gray-500 truncate">#{d.channel_name ?? "channel"}</div>
-              </div>
-              <div className="text-[10.5px] text-gray-400 shrink-0">{formatDistanceToNow(new Date(d.occurred_at), { addSuffix: true })}</div>
+    <div className="p-6 max-w-[1440px] mx-auto">
+      <div className="grid lg:grid-cols-[1fr_320px] gap-6">
+        <section className="min-w-0">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-[22px] font-black">Activity Digest</h2>
+              <p className="text-[12.5px]" style={{ color: c.onSurfaceVariant }}>Intelligent summaries of your team's Slack activity.</p>
             </div>
-            <div className={`text-[12.5px] whitespace-pre-wrap leading-relaxed ${openId === d.id ? "" : "line-clamp-3"}`}>{d.summary}</div>
-            <div className="text-[10.5px] font-semibold mt-3 text-gray-500">{openId === d.id ? "Close" : "Open card"}</div>
-          </button>
-        ))}
+            <button onClick={() => gen.mutate()} disabled={!isConnected || gen.isPending}
+              className="h-9 px-3 rounded-lg text-[12px] font-semibold text-white flex items-center gap-1.5 disabled:opacity-50" style={{ background: "#000" }}>
+              {gen.isPending ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+              Generate now
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <div className="flex gap-1 rounded-lg border p-0.5 bg-white text-[11px]" style={{ borderColor: c.outline }}>
+              {([["today", "Today"], ["yesterday", "Yesterday"], ["week", "Last 7 Days"]] as const).map(([id, label]) => (
+                <button key={id} onClick={() => setRange(id)}
+                  className="px-3 py-1 rounded-md font-semibold"
+                  style={range === id ? { background: "#000", color: "#fff" } : { color: c.onSurface }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <select value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)}
+              className="h-8 rounded-lg border bg-white px-2 text-[11.5px] outline-none" style={{ borderColor: c.outline }}>
+              <option value="all">All Channels</option>
+              {channelSet.map((n) => <option key={n} value={n}>#{n}</option>)}
+            </select>
+          </div>
+
+          {gen.isError && (
+            <div className="mb-4 rounded-lg border p-3 text-[12px]" style={{ background: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" }}>
+              {(gen.error as Error)?.message}
+            </div>
+          )}
+
+          {listQuery.isLoading && <div className="text-[12px] text-gray-500">Loading…</div>}
+          {filtered.length === 0 && !listQuery.isLoading && (
+            <div className="rounded-xl border p-8 bg-white text-center" style={{ borderColor: c.outline }}>
+              <Newspaper size={24} className="mx-auto text-gray-300 mb-2" />
+              <div className="text-[13px] font-semibold">No digests in this range</div>
+              <div className="text-[11.5px] text-gray-500 mt-1">
+                {isConnected ? "Try 'Last 7 Days' or click Generate now." : "Connect Slack first."}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {filtered.map((d: any) => (
+              <article key={d.id} className="rounded-xl border bg-white p-4" style={{ borderColor: c.outline }}>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10.5px] font-bold px-2 py-0.5 rounded" style={{ background: "#000", color: "#fff" }}>#{d.channel_name}</span>
+                    <span className="text-[10.5px] text-gray-500">{formatDistanceToNow(new Date(d.occurred_at), { addSuffix: true })}</span>
+                  </div>
+                  <a href="https://slack.com" target="_blank" rel="noreferrer" className="text-[11px] font-semibold underline flex items-center gap-1">
+                    View in Slack <ExternalLink size={10} />
+                  </a>
+                </div>
+                <div className="text-[12.5px] whitespace-pre-wrap leading-relaxed">{d.summary}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <aside className="space-y-4">
+          <div className="rounded-xl border bg-white p-4" style={{ borderColor: c.outline }}>
+            <h3 className="text-[13px] font-bold mb-3">Key Statistics</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg p-3" style={{ background: c.surfaceLow }}>
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Summarized</div>
+                <div className="text-[22px] font-black leading-none mt-1">{all.length}</div>
+                <div className="text-[10.5px] text-gray-500 mt-0.5">Threads</div>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: c.surfaceLow }}>
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Participants</div>
+                <div className="text-[22px] font-black leading-none mt-1">{Math.max(participantCount, channelSet.length)}</div>
+                <div className="text-[10.5px] text-gray-500 mt-0.5">Team Members</div>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border bg-white p-4" style={{ borderColor: c.outline }}>
+            <h3 className="text-[13px] font-bold mb-3">Team Pulse</h3>
+            <div className="text-[10.5px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Top Active Channels</div>
+            <ul className="space-y-2">
+              {topChannels.map((ch) => (
+                <li key={ch.name} className="flex items-center justify-between text-[12px]">
+                  <span className="font-semibold">#{ch.name}</span>
+                  <span className="text-gray-500 text-[10.5px]">{ch.count} digest{ch.count === 1 ? "" : "s"}</span>
+                </li>
+              ))}
+              {topChannels.length === 0 && <li className="text-[11.5px] text-gray-500">No data yet.</li>}
+            </ul>
+          </div>
+          <div className="rounded-xl border p-4" style={{ borderColor: c.outline, background: "#000", color: "#fff" }}>
+            <h3 className="text-[13px] font-bold mb-1.5">Trelo Insight</h3>
+            <p className="text-[11.5px] opacity-80">
+              {all.length > 0
+                ? `Your team is most active in #${topChannels[0]?.name ?? "your workspace"}. Consider generating a digest to surface decisions and blockers.`
+                : "Generate your first digest to see insights."}
+            </p>
+          </div>
+        </aside>
       </div>
     </div>
   );
