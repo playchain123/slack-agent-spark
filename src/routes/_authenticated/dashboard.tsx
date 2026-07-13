@@ -384,13 +384,15 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
           ) : (
             <div className="space-y-3">
               {digests.slice(0, 4).map((d: any) => (
-                <article key={d.id} className="rounded-lg border p-3" style={{ borderColor: c.surfaceMid, background: "#fafafa" }}>
+                <button key={d.id} onClick={() => setOpenDigest(d)}
+                  className="w-full text-left rounded-lg border p-3 hover:shadow-sm transition-shadow" style={{ borderColor: c.surfaceMid, background: "#fafafa" }}>
                   <div className="flex items-center justify-between gap-3 mb-1.5">
                     <span className="text-[10.5px] font-bold px-2 py-0.5 rounded" style={{ background: "#000", color: "#fff" }}>#{d.channel_name ?? "channel"}</span>
                     <span className="text-[10.5px] text-gray-500">{formatDistanceToNow(new Date(d.occurred_at), { addSuffix: true })}</span>
                   </div>
                   <div className="text-[12.5px] whitespace-pre-wrap leading-relaxed line-clamp-4">{d.summary}</div>
-                </article>
+                  <div className="text-[10.5px] text-gray-500 mt-2 font-semibold">Click to read full digest →</div>
+                </button>
               ))}
             </div>
           )}
