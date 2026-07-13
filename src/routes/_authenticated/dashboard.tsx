@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { queryOptions, useSuspenseQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyWorkspace } from "@/lib/workspace.functions";
-import { getSlackInstallUrl } from "@/lib/slack.functions";
+import { getSlackInstallUrl, syncSlackMessages } from "@/lib/slack.functions";
 import {
   getDashboardMetrics,
   listCommitments,
@@ -60,11 +60,29 @@ function TreloLogo({ size = 32 }: { size?: number }) {
 function Dashboard() {
   const [view, setView] = useState<View>("dashboard");
   const [collapsed, setCollapsed] = useState(false);
+  const [autoSyncAttempted, setAutoSyncAttempted] = useState(false);
   const logout = useLogout();
+  const qc = useQueryClient();
   const { data } = useSuspenseQuery(workspaceQuery);
+  const syncFn = useServerFn(syncSlackMessages);
+  const syncMutation = useMutation({
+    mutationFn: () => syncFn(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["workspace"] });
+      qc.invalidateQueries({ queryKey: ["dashboardMetrics"] });
+      qc.invalidateQueries({ queryKey: ["answers"] });
+    },
+  });
   const workspaceName = data.workspace?.name ?? "Your workspace";
   const isConnected = Boolean(data.installation);
+  const messageCount = data.slackStats?.messages ?? 0;
   const width = collapsed ? 64 : 240;
+
+  useEffect(() => {
+    if (!isConnected || autoSyncAttempted || messageCount > 0) return;
+    setAutoSyncAttempted(true);
+    syncMutation.mutate();
+  }, [autoSyncAttempted, isConnected, messageCount, syncMutation]);
 
   return (
     <div className="min-h-screen" style={{ background: c.bg, color: c.onSurface, fontFamily: "Inter, ui-sans-serif, system-ui" }}>
@@ -75,12 +93,61 @@ function Dashboard() {
           userEmail={data.profile?.email ?? undefined} userName={data.profile?.full_name ?? undefined} />
         <div className="flex-1">
           {!isConnected && <ConnectSlackBanner />}
+          {isConnected && (
+            <SlackSyncBanner
+              channels={data.slackStats?.channels ?? 0}
+              messages={messageCount}
+              syncing={syncMutation.isPending}
+              error={syncMutation.error instanceof Error ? syncMutation.error.message : null}
+              result={syncMutation.data}
+              onSync={() => syncMutation.mutate()}
+            />
+          )}
           {view === "dashboard" && <DashboardView isConnected={isConnected} setView={setView} />}
           {view === "ask" && <AskView isConnected={isConnected} />}
           {view === "commitments" && <CommitmentsView isConnected={isConnected} />}
           {view === "digest" && <DigestView isConnected={isConnected} />}
         </div>
       </main>
+    </div>
+  );
+}
+
+function SlackSyncBanner({ channels, messages, syncing, error, result, onSync }: {
+  channels: number;
+  messages: number;
+  syncing: boolean;
+  error: string | null;
+  result?: { messagesSynced?: number; channelsSynced?: number; errors?: string[] };
+  onSync: () => void;
+}) {
+  const needsSync = messages === 0;
+  const text = error
+    ? error
+    : syncing
+      ? "Syncing recent Slack channels and messages into Trelo…"
+      : result
+        ? `Slack synced: ${result.messagesSynced ?? 0} recent messages across ${result.channelsSynced ?? channels} channels.`
+        : `${messages.toLocaleString()} Slack messages indexed across ${channels.toLocaleString()} channels.`;
+
+  if (!needsSync && !syncing && !error && !result) return null;
+
+  return (
+    <div className="mx-6 mt-4 rounded-xl border p-4 flex items-center gap-4" style={{ background: error ? "#fef2f2" : "#eff6ff", borderColor: error ? "#fecaca" : "#bfdbfe" }}>
+      <div className="w-10 h-10 rounded-lg grid place-items-center" style={{ background: error ? "#fee2e2" : "#dbeafe" }}>
+        {syncing ? <Loader2 size={19} className="animate-spin" color={error ? "#991b1b" : "#1d4ed8"} /> : <Slack size={19} color={error ? "#991b1b" : "#1d4ed8"} />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-bold" style={{ color: error ? "#991b1b" : "#1e3a8a" }}>Slack is connected</div>
+        <div className="text-[11.5px] mt-0.5" style={{ color: error ? "#991b1b" : "#1d4ed8" }}>{text}</div>
+        {result?.errors && result.errors.length > 0 && (
+          <div className="text-[10.5px] mt-1" style={{ color: "#1d4ed8" }}>{result.errors.slice(0, 2).join(" • ")}</div>
+        )}
+      </div>
+      <button onClick={onSync} disabled={syncing}
+        className="h-9 px-3.5 rounded-md text-[12px] font-semibold text-white disabled:opacity-60" style={{ background: "#000" }}>
+        {syncing ? "Syncing…" : "Sync now"}
+      </button>
     </div>
   );
 }

@@ -43,6 +43,24 @@ export const getMyWorkspace = createServerFn({ method: "GET" })
 
     const installation = installByWorkspace.get(workspace.id) ?? null;
 
+    let slackStats: { channels: number; messages: number } | null = null;
+    if (installation) {
+      const [channelsCount, messagesCount] = await Promise.all([
+        supabaseAdmin
+          .from("slack_channels")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", workspace.id),
+        supabaseAdmin
+          .from("slack_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", workspace.id),
+      ]);
+      slackStats = {
+        channels: channelsCount.count ?? 0,
+        messages: messagesCount.count ?? 0,
+      };
+    }
+
     // Get profile
     const { data: profile } = await supabase
       .from("profiles")
@@ -58,6 +76,7 @@ export const getMyWorkspace = createServerFn({ method: "GET" })
         isOwner: workspace.owner_id === userId,
       },
       installation: installation ?? null,
+      slackStats,
       profile: profile ?? null,
     };
   });

@@ -4,6 +4,7 @@ import {
   normalizeReturnOrigin,
   verifyState,
 } from "@/lib/slack.server";
+import { syncWorkspaceSlack } from "@/lib/slack-sync.server";
 
 export const Route = createFileRoute("/api/public/slack/oauth/callback")({
   server: {
@@ -229,6 +230,20 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
           if (upsertErr) {
             console.error("Failed to store Slack installation", upsertErr);
             return new Response("Failed to store installation", { status: 500 });
+          }
+
+          if (tokenData.access_token) {
+            try {
+              await syncWorkspaceSlack({
+                workspaceId,
+                botToken: tokenData.access_token,
+                maxChannels: 30,
+                messagesPerChannel: 30,
+                joinPublicChannels: true,
+              });
+            } catch (syncError) {
+              console.error("Initial Slack sync failed", syncError);
+            }
           }
 
           if (isPublicFlow && slackUserEmail) {

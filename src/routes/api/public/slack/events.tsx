@@ -139,19 +139,28 @@ async function processEvent(teamId: string, event: any) {
   }
 
   // Insert message
-  const { data: msgRow } = await supabaseAdmin
+  const { data: msgRow, error: messageError } = await supabaseAdmin
     .from("slack_messages")
-    .insert({
-      workspace_id: workspaceId,
-      slack_channel_id: event.channel,
-      slack_user_id: event.user ?? null,
-      slack_user_name: userName,
-      text: event.text,
-      ts: event.ts ?? null,
-      permalink,
-    })
+    .upsert(
+      {
+        workspace_id: workspaceId,
+        slack_channel_id: event.channel,
+        slack_user_id: event.user ?? null,
+        slack_user_name: userName,
+        text: event.text,
+        ts: event.ts ?? null,
+        permalink,
+        created_at: event.ts ? new Date(Math.floor(Number.parseFloat(event.ts) * 1000)).toISOString() : undefined,
+      },
+      { onConflict: "workspace_id,slack_channel_id,ts" },
+    )
     .select("id")
     .single();
+
+  if (messageError) {
+    console.error("Failed to save Slack message", messageError);
+    return;
+  }
 
   // Extract commitments with AI (best effort, no blocking)
   try {
@@ -170,8 +179,8 @@ async function processEvent(teamId: string, event: any) {
         owner_name: c.owner ?? userName ?? null,
         owner_slack_id: event.user ?? null,
         due_date: c.due && /^\d{4}-\d{2}-\d{2}/.test(c.due) ? c.due.slice(0, 10) : null,
-        status: "open",
-        priority: "medium",
+        status: "pending",
+        priority: "normal",
         source_permalink: permalink,
         channel_name: channelName,
       });
