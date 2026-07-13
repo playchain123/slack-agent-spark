@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,7 +14,6 @@ export const Route = createFileRoute("/auth/slack/complete")({
 });
 
 function SlackAuthComplete() {
-  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,21 +26,38 @@ function SlackAuthComplete() {
         return;
       }
 
+      // If already signed in, skip verification and go straight to dashboard.
+      const { data: existing } = await supabase.auth.getSession();
+      if (existing.session) {
+        window.location.replace("/dashboard?slack=connected");
+        return;
+      }
+
       const { error: verifyError } = await supabase.auth.verifyOtp({
-        type: "magiclink",
+        type: "email",
         token_hash: tokenHash,
       });
 
       if (verifyError) {
+        console.error("Slack sign-in verifyOtp failed", verifyError);
         setError(verifyError.message);
         return;
       }
 
-      navigate({ to: "/dashboard", replace: true, search: { slack: "connected" } });
+      // Confirm session persisted before navigating so the auth gate sees it.
+      const { data: after } = await supabase.auth.getSession();
+      if (!after.session) {
+        setError("Sign-in did not complete. Please try again.");
+        return;
+      }
+
+      // Full reload so the _authenticated gate re-reads the fresh session.
+      window.location.replace("/dashboard?slack=connected");
     }
 
     void completeSignIn();
-  }, [navigate]);
+  }, []);
+
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#faf7f8" }}>
