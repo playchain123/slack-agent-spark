@@ -17,48 +17,50 @@ function SlackAuthComplete() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function completeSignIn() {
-      const params = new URLSearchParams(window.location.search);
-      const tokenHash = params.get("token_hash");
+    let cancelled = false;
 
-      if (!tokenHash) {
-        setError("Slack connected, but the sign-in link was missing. Please try again.");
-        return;
-      }
-
-      // If already signed in, skip verification and go straight to dashboard.
-      const { data: existing } = await supabase.auth.getSession();
-      if (existing.session) {
-        window.location.replace("/dashboard?slack=connected");
-        return;
-      }
-
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        type: "magiclink",
-        token_hash: tokenHash,
-      });
-
-
-      if (verifyError) {
-        console.error("Slack sign-in verifyOtp failed", verifyError);
-        setError(verifyError.message);
-        return;
-      }
-
-      // Confirm session persisted before navigating so the auth gate sees it.
-      const { data: after } = await supabase.auth.getSession();
-      if (!after.session) {
-        setError("Sign-in did not complete. Please try again.");
-        return;
-      }
-
+    function goToDashboard() {
       // Full reload so the _authenticated gate re-reads the fresh session.
       window.location.replace("/dashboard?slack=connected");
     }
 
-    void completeSignIn();
-  }, []);
+    async function waitForSession() {
+      // Supabase's detectSessionInUrl parses the tokens in the URL hash
+      // (#access_token=...&refresh_token=...) and persists the session.
+      // It runs on client init, but may not be finished the instant this
+      // effect runs, so we poll briefly and also listen for auth events.
+      const { data: existing } = await supabase.auth.getSession();
+      if (existing.session) return goToDashboard();
 
+      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session && !cancelled) {
+          sub.subscription.unsubscribe();
+          goToDashboard();
+        }
+      });
+
+      // Poll for up to ~8 seconds as a safety net.
+      for (let i = 0; i < 40; i++) {
+        if (cancelled) return;
+        await new Promise((r) => setTimeout(r, 200));
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          sub.subscription.unsubscribe();
+          return goToDashboard();
+        }
+      }
+
+      sub.subscription.unsubscribe();
+      if (!cancelled) {
+        setError("Sign-in did not complete. Please try again.");
+      }
+    }
+
+    void waitForSession();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#faf7f8" }}>
