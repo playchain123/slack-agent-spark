@@ -34,9 +34,10 @@ function SlackAuthComplete() {
       }
 
       const { error: verifyError } = await supabase.auth.verifyOtp({
-        type: "email",
+        type: "magiclink",
         token_hash: tokenHash,
       });
+
 
       if (verifyError) {
         console.error("Slack sign-in verifyOtp failed", verifyError);
