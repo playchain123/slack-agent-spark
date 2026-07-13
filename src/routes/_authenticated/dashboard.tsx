@@ -871,14 +871,14 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
           {pending.map((row: any) => (
             <li key={row.id} className="rounded-lg border p-3 bg-white flex items-center gap-3" style={{ borderColor: c.outline }}>
               <input type="checkbox" checked={false} onChange={(e) => toggle.mutate({ id: row.id, done: e.target.checked })} className="h-4 w-4" />
-              <div className="flex-1 min-w-0">
+              <button onClick={() => setOpenItem(row)} className="flex-1 min-w-0 text-left hover:opacity-80">
                 <div className="text-[13px] font-semibold truncate">{row.title}</div>
                 <div className="text-[10.5px] text-gray-500 flex flex-wrap gap-x-3 mt-0.5">
                   {row.channel_name && <span>#{row.channel_name}</span>}
                   {row.due_date && <span>📅 {row.due_date}</span>}
                   {row.owner_name && <span>👤 {row.owner_name}</span>}
                 </div>
-              </div>
+              </button>
               <span className="text-[10px] font-bold px-2 py-1 rounded border" style={{ borderColor: c.outline }}>To Do</span>
               {row.source_permalink && (
                 <a href={row.source_permalink} target="_blank" rel="noreferrer" className="p-1 text-gray-400 hover:text-black" title="Open in Slack">
