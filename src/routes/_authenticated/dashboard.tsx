@@ -607,6 +607,7 @@ function AskView({ isConnected }: { isConnected: boolean }) {
   const listAnswersFn = useServerFn(listRecentAnswers);
   const [input, setInput] = useState("");
   const [lastQuestion, setLastQuestion] = useState("");
+  const [openAnswer, setOpenAnswer] = useState<any | null>(null);
 
   const historyQuery = useQuery({
     queryKey: ["answers", "all"],
