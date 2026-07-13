@@ -1,11 +1,51 @@
 import { createHmac, timingSafeEqual, randomBytes } from "crypto";
+import { getRequest } from "@tanstack/react-start/server";
 
 export interface SlackStatePayload {
   workspace_id?: string;
   user_id?: string;
   flow?: "workspace" | "public";
+  return_origin?: string;
   nonce: string;
   exp: number;
+}
+
+export function normalizeReturnOrigin(value?: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    const isLocalhost = host === "localhost" || host === "127.0.0.1";
+    const isLovableHost = host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com");
+    const configuredHost = process.env.PUBLIC_ORIGIN ? new URL(process.env.PUBLIC_ORIGIN).hostname.toLowerCase() : null;
+    const isConfiguredHost = configuredHost ? host === configuredHost : false;
+    if ((url.protocol === "https:" && (isLovableHost || isConfiguredHost)) || (url.protocol === "http:" && isLocalhost)) {
+      return url.origin;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function getCurrentRequestOrigin(): string | null {
+  const request = getRequest();
+  const origin = normalizeReturnOrigin(request.headers.get("origin"));
+  if (origin) return origin;
+
+  const referer = request.headers.get("referer");
+  const refererOrigin = normalizeReturnOrigin(referer);
+  if (refererOrigin) return refererOrigin;
+
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+  const forwardedOrigin = normalizeReturnOrigin(
+    forwardedHost ? `${forwardedProto}://${forwardedHost.split(",")[0]?.trim()}` : null,
+  );
+  if (forwardedOrigin) return forwardedOrigin;
+
+  const host = request.headers.get("host");
+  return normalizeReturnOrigin(host ? `https://${host}` : null);
 }
 
 export function getSlackEnv() {
@@ -52,20 +92,22 @@ export function verifyState(token: string, secret: string): SlackStatePayload {
   return payload;
 }
 
-export function createInstallState(workspaceId: string, userId: string, secret: string): string {
+export function createInstallState(workspaceId: string, userId: string, secret: string, returnOrigin?: string | null): string {
   const payload: SlackStatePayload = {
     workspace_id: workspaceId,
     user_id: userId,
     flow: "workspace",
+    ...(returnOrigin ? { return_origin: returnOrigin } : {}),
     nonce: randomBytes(16).toString("hex"),
     exp: Math.floor(Date.now() / 1000) + 600,
   };
   return signState(payload, secret);
 }
 
-export function createPublicInstallState(secret: string): string {
+export function createPublicInstallState(secret: string, returnOrigin?: string | null): string {
   const payload: SlackStatePayload = {
     flow: "public",
+    ...(returnOrigin ? { return_origin: returnOrigin } : {}),
     nonce: randomBytes(16).toString("hex"),
     exp: Math.floor(Date.now() / 1000) + 600,
   };

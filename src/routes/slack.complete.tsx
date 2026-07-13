@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/auth/slack/complete")({
+export const Route = createFileRoute("/slack/complete")({
   head: () => ({
     meta: [
       { title: "Connecting Slack — Trelo" },
@@ -20,15 +20,10 @@ function SlackAuthComplete() {
     let cancelled = false;
 
     function goToDashboard() {
-      // Full reload so the _authenticated gate re-reads the fresh session.
       window.location.replace("/dashboard?slack=connected");
     }
 
     async function waitForSession() {
-      // Supabase's detectSessionInUrl parses the tokens in the URL hash
-      // (#access_token=...&refresh_token=...) and persists the session.
-      // It runs on client init, but may not be finished the instant this
-      // effect runs, so we poll briefly and also listen for auth events.
       const { data: existing } = await supabase.auth.getSession();
       if (existing.session) return goToDashboard();
 
@@ -39,7 +34,6 @@ function SlackAuthComplete() {
         }
       });
 
-      // Poll for up to ~8 seconds as a safety net.
       for (let i = 0; i < 40; i++) {
         if (cancelled) return;
         await new Promise((r) => setTimeout(r, 200));

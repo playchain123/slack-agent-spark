@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,6 @@ export const Route = createFileRoute("/auth")({
 type Mode = "signin" | "signup";
 
 function AuthPage() {
-  const navigate = useNavigate();
   const { next } = Route.useSearch();
   const dest = next ?? "/dashboard";
   const getSlackInstallUrl = useServerFn(getPublicSlackInstallUrl);

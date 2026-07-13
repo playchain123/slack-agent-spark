@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getSlackEnv,
+  normalizeReturnOrigin,
   verifyState,
 } from "@/lib/slack.server";
 
@@ -23,11 +24,13 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
 
         let workspaceId: string | undefined;
         let stateUserId: string | undefined;
+        let returnOrigin: string | null = null;
         let isPublicFlow = false;
         try {
           const payload = verifyState(state, stateSecret);
           workspaceId = payload.workspace_id;
           stateUserId = payload.user_id;
+          returnOrigin = normalizeReturnOrigin(payload.return_origin) ?? new URL(request.url).origin;
           isPublicFlow = payload.flow === "public" || !workspaceId;
         } catch (err) {
           console.error("State verification failed", err);
@@ -75,7 +78,7 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
               type: "magiclink",
               email,
               options: {
-                redirectTo: `${new URL(request.url).origin}/auth/slack/complete`,
+                redirectTo: `${returnOrigin ?? new URL(request.url).origin}/slack/complete`,
               },
             });
 
@@ -231,31 +234,12 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
           if (isPublicFlow && slackUserEmail) {
             // Redirect the browser through Supabase's own verify endpoint.
             // Supabase sets the session tokens in the URL hash and then
-            // redirects to /auth/slack/complete, where detectSessionInUrl
+            // redirects to /slack/complete, where detectSessionInUrl
             // picks them up and persists the session before we navigate.
             return redirectWithMagicSignIn(slackUserEmail);
           }
 
-          if (!isPublicFlow && stateUserId) {
-            const { data: profile } = await supabaseAdmin
-              .from("profiles")
-              .select("email")
-              .eq("id", stateUserId)
-              .maybeSingle();
-            let loginEmail = profile?.email ?? null;
-
-            if (!loginEmail) {
-              const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(stateUserId);
-              if (userError) console.error("Failed to load Slack installer user", userError);
-              loginEmail = userData.user?.email ?? null;
-            }
-
-            if (loginEmail) {
-              return redirectWithMagicSignIn(loginEmail);
-            }
-          }
-
-          return Response.redirect(`${new URL(request.url).origin}/dashboard?slack=connected`, 302);
+          return Response.redirect(`${returnOrigin ?? new URL(request.url).origin}/dashboard?slack=connected`, 302);
         } catch (err) {
           console.error("OAuth callback error", err);
           return new Response("Internal error", { status: 500 });
