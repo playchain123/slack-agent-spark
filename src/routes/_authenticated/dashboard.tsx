@@ -924,6 +924,7 @@ function DigestView({ isConnected }: { isConnected: boolean }) {
   const genFn = useServerFn(generateDigest);
   const [range, setRange] = useState<"today" | "yesterday" | "week">("today");
   const [channelFilter, setChannelFilter] = useState<string>("all");
+  const [openDigest, setOpenDigest] = useState<any | null>(null);
   const listQuery = useQuery({ queryKey: ["digest"], queryFn: () => listFn() });
   const gen = useMutation({ mutationFn: () => genFn(), onSuccess: () => qc.invalidateQueries({ queryKey: ["digest"] }) });
 
