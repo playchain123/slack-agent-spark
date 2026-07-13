@@ -901,7 +901,7 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
             {done.map((row: any) => (
               <li key={row.id} className="rounded-lg border p-3 bg-white flex items-center gap-3 opacity-60" style={{ borderColor: c.outline }}>
                 <input type="checkbox" checked onChange={(e) => toggle.mutate({ id: row.id, done: e.target.checked })} className="h-4 w-4" />
-                <div className="flex-1 min-w-0 text-[12.5px] line-through truncate">{row.title}</div>
+                <button onClick={() => setOpenItem(row)} className="flex-1 min-w-0 text-[12.5px] line-through truncate text-left">{row.title}</button>
                 <span className="text-[10px] font-bold px-2 py-1 rounded" style={{ background: c.surfaceMid }}>Done</span>
                 <button onClick={() => del.mutate(row.id)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={13} /></button>
               </li>
@@ -909,6 +909,10 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
           </ul>
         )}
       </section>
+      <CommitmentDetailModal item={openItem} onClose={() => setOpenItem(null)}
+        onAccept={(id) => accept.mutate(id)}
+        onToggle={(id, done) => toggle.mutate({ id, done })}
+        onDelete={(id) => del.mutate(id)} />
     </div>
   );
 }
