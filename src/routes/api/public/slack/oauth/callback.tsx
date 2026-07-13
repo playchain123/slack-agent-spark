@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
               type: "magiclink",
               email,
               options: {
-                redirectTo: `${returnOrigin ?? new URL(request.url).origin}/auth/slack/complete`,
+                redirectTo: `${returnOrigin ?? new URL(request.url).origin}/slack/complete`,
               },
             });
 
