@@ -702,9 +702,11 @@ function AskView({ isConnected }: { isConnected: boolean }) {
               <ul className="space-y-3">
                 {trending.map((t: any) => (
                   <li key={t.id}>
-                    <div className="text-[10.5px] uppercase tracking-wider font-semibold text-gray-500">Recent</div>
-                    <div className="text-[12px] font-semibold line-clamp-2 mt-0.5">{t.question}</div>
-                    <div className="text-[10.5px] text-gray-500 mt-0.5">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}</div>
+                    <button onClick={() => setOpenAnswer(t)} className="w-full text-left hover:bg-gray-50 rounded p-1 -m-1">
+                      <div className="text-[10.5px] uppercase tracking-wider font-semibold text-gray-500">Recent</div>
+                      <div className="text-[12px] font-semibold line-clamp-2 mt-0.5">{t.question}</div>
+                      <div className="text-[10.5px] text-gray-500 mt-0.5">{formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}</div>
+                    </button>
                   </li>
                 ))}
               </ul>
