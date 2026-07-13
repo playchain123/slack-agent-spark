@@ -1,21 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-
-// ---------- helper: get caller's workspace ----------
-async function getCallerWorkspace(
-  supabase: any,
-  userId: string,
-): Promise<{ workspaceId: string; role: string } | null> {
-  const { data } = await supabase
-    .from("workspace_members")
-    .select("workspace_id, role")
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle();
-  if (!data) return null;
-  return { workspaceId: data.workspace_id, role: data.role };
-}
+import { getCallerWorkspace } from "./workspace.server";
+import { slackRealtimeSearch } from "./slack-search.server";
 
 // ---------- DASHBOARD METRICS ----------
 export const getDashboardMetrics = createServerFn({ method: "GET" })
@@ -34,7 +21,7 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
       supabase.from("slack_messages").select("id", { count: "exact", head: true })
         .eq("workspace_id", w.workspaceId).gte("created_at", since7),
       supabase.from("commitments").select("id", { count: "exact", head: true })
-        .eq("workspace_id", w.workspaceId).eq("status", "open"),
+        .eq("workspace_id", w.workspaceId).eq("status", "pending"),
       supabase.from("commitments").select("id", { count: "exact", head: true })
         .eq("workspace_id", w.workspaceId).eq("status", "done"),
       supabase.from("slack_channels").select("id, name, slack_channel_id")
@@ -76,7 +63,7 @@ export const toggleCommitment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const status = data.done ? "done" : "open";
+    const status = data.done ? "done" : "pending";
     const completed_at = data.done ? new Date().toISOString() : null;
     const { error } = await supabase
       .from("commitments")
@@ -101,7 +88,7 @@ export const createCommitment = createServerFn({ method: "POST" })
     z.object({
       title: z.string().min(1),
       due_date: z.string().nullable().optional(),
-      priority: z.enum(["low", "medium", "high"]).optional(),
+      priority: z.enum(["low", "normal", "high"]).optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -112,8 +99,8 @@ export const createCommitment = createServerFn({ method: "POST" })
       workspace_id: w.workspaceId,
       title: data.title,
       due_date: data.due_date ?? null,
-      priority: data.priority ?? "medium",
-      status: "open",
+      priority: data.priority ?? "normal",
+      status: "pending",
     }).select("*").single();
     if (error) throw new Error(error.message);
     return row;
@@ -190,7 +177,7 @@ export const generateDigest = createServerFn({ method: "POST" })
         workspace_id: w.workspaceId,
         slack_channel_id: chanId,
         channel_name: channelName,
-        event_type: "daily_summary",
+        event_type: "summary",
         summary,
         occurred_at: new Date().toISOString(),
       });
@@ -215,45 +202,6 @@ export const listRecentAnswers = createServerFn({ method: "GET" })
       .limit(30);
     return data ?? [];
   });
-
-// Slack Real-Time Search API (assistant.search.context) — official Slack AI capability
-async function slackRealtimeSearch(
-  botToken: string,
-  query: string,
-): Promise<Array<{ channel_name?: string; user_name?: string; text: string; permalink?: string }>> {
-  try {
-    const res = await fetch("https://slack.com/api/assistant.search.context", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${botToken}`,
-        "Content-Type": "application/json; charset=utf-8",
-      },
-      body: JSON.stringify({
-        query,
-        content_types: ["messages"],
-        include_context_messages: true,
-        limit: 15,
-      }),
-    });
-    const data = (await res.json()) as any;
-    if (!data.ok) {
-      console.warn("assistant.search.context not ok:", data.error);
-      return [];
-    }
-    const results = data?.results?.messages ?? data?.messages ?? [];
-    return results
-      .map((m: any) => ({
-        channel_name: m.channel?.name ?? m.channel_name,
-        user_name: m.author_user_name ?? m.user_name ?? m.username,
-        text: m.message_content?.text ?? m.text ?? "",
-        permalink: m.permalink,
-      }))
-      .filter((r: any) => r.text);
-  } catch (err) {
-    console.warn("assistant.search.context failed:", err);
-    return [];
-  }
-}
 
 export const askTrelo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

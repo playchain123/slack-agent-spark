@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual, randomBytes } from "crypto";
 
 export interface SlackStatePayload {
   workspace_id?: string;
+  user_id?: string;
   flow?: "workspace" | "public";
   nonce: string;
   exp: number;
@@ -51,9 +52,10 @@ export function verifyState(token: string, secret: string): SlackStatePayload {
   return payload;
 }
 
-export function createInstallState(workspaceId: string, secret: string): string {
+export function createInstallState(workspaceId: string, userId: string, secret: string): string {
   const payload: SlackStatePayload = {
     workspace_id: workspaceId,
+    user_id: userId,
     flow: "workspace",
     nonce: randomBytes(16).toString("hex"),
     exp: Math.floor(Date.now() / 1000) + 600,

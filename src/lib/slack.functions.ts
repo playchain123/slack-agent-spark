@@ -30,7 +30,7 @@ export const getSlackInstallUrl = createServerFn({ method: "POST" })
     }
 
     const { clientId, stateSecret } = getSlackEnv();
-    const state = createInstallState(member.workspace_id, stateSecret);
+    const state = createInstallState(member.workspace_id, userId, stateSecret);
     const slackRedirectOrigin = "https://slack-agent-spark.lovable.app";
     const redirectUri = `${process.env.PUBLIC_ORIGIN ?? slackRedirectOrigin}/api/public/slack/oauth/callback`;
     return { url: buildSlackInstallUrl(clientId, state, redirectUri) };

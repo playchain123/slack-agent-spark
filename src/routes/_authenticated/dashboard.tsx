@@ -348,8 +348,12 @@ function AskView({ isConnected }: { isConnected: boolean }) {
   const askFn = useServerFn(askTrelo);
   const historyQuery = useQuery({ queryKey: ["answers"], queryFn: () => listRecentAnswers(), enabled: isConnected });
   const [input, setInput] = useState("");
+  const [lastQuestion, setLastQuestion] = useState("");
   const mutation = useMutation({
-    mutationFn: (question: string) => askFn({ data: { question } }),
+    mutationFn: (question: string) => {
+      setLastQuestion(question);
+      return askFn({ data: { question } });
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["answers"] }); setInput(""); },
   });
 
@@ -382,7 +386,7 @@ function AskView({ isConnected }: { isConnected: boolean }) {
       )}
 
       {mutation.data && (
-        <AnswerCard question={input || "Your question"} answer={mutation.data.answer} sources={mutation.data.sources} />
+        <AnswerCard question={lastQuestion || "Your question"} answer={mutation.data.answer} sources={mutation.data.sources} />
       )}
 
       <div className="mt-6">
@@ -455,7 +459,7 @@ function CommitmentsView({ isConnected }: { isConnected: boolean }) {
   });
 
   const rows = (listQuery.data ?? []).filter((c: any) =>
-    filter === "all" ? true : filter === "open" ? c.status === "open" : c.status === "done"
+    filter === "all" ? true : filter === "open" ? c.status === "pending" : c.status === "done"
   );
 
   return (
