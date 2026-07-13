@@ -718,6 +718,7 @@ function AskView({ isConnected }: { isConnected: boolean }) {
           </div>
         </aside>
       </div>
+      <AnswerDetailModal item={openAnswer} onClose={() => setOpenAnswer(null)} />
     </div>
   );
 }
