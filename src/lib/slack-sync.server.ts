@@ -208,11 +208,12 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
         slack_user_name: userId,
         text: message.text,
         ts: message.ts,
-        permalink: null,
+        permalink: buildPermalink(channel.id, message.ts),
         created_at: slackTimestampToIso(message.ts),
       });
     }
   }
+
 
   if (messages.length === 0) {
     return { channelsFound: channels.length, channelsSynced: channelRows.length, messagesSynced: 0, errors };
