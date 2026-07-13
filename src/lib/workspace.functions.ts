@@ -6,16 +6,32 @@ export const getMyWorkspace = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    // Get first workspace this user is a member of (v1 = one workspace per user)
-    const { data: membership, error: memErr } = await supabase
+    // Prefer the Slack-connected workspace when a user belongs to more than one workspace.
+    const { data: memberships, error: memErr } = await supabase
       .from("workspace_members")
       .select("workspace_id, role, workspaces(id, name, owner_id)")
       .eq("user_id", userId)
-      .limit(1)
-      .maybeSingle();
+      .order("created_at", { ascending: true });
 
     if (memErr) throw memErr;
-    if (!membership || !membership.workspaces) {
+    if (!memberships || memberships.length === 0) {
+      return { workspace: null, installation: null };
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const workspaceIds = memberships.map((membership: any) => membership.workspace_id);
+    const { data: installations } = await supabaseAdmin
+      .from("slack_installations")
+      .select("id, workspace_id, slack_team_id, slack_team_name, bot_user_id, installed_at")
+      .in("workspace_id", workspaceIds);
+
+    const installByWorkspace = new Map((installations ?? []).map((install: any) => [install.workspace_id, install]));
+    const membership =
+      memberships.find((row: any) => installByWorkspace.has(row.workspace_id)) ??
+      memberships.find((row: any) => row.role === "owner") ??
+      memberships[0];
+
+    if (!membership.workspaces) {
       return { workspace: null, installation: null };
     }
 
@@ -25,12 +41,7 @@ export const getMyWorkspace = createServerFn({ method: "GET" })
       owner_id: string;
     };
 
-    // Get Slack installation (via safe view — bot_token not exposed)
-    const { data: installation } = await supabase
-      .from("slack_installations_public")
-      .select("id, slack_team_id, slack_team_name, bot_user_id, installed_at")
-      .eq("workspace_id", workspace.id)
-      .maybeSingle();
+    const installation = installByWorkspace.get(workspace.id) ?? null;
 
     // Get profile
     const { data: profile } = await supabase

@@ -22,10 +22,12 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
         }
 
         let workspaceId: string | undefined;
+        let stateUserId: string | undefined;
         let isPublicFlow = false;
         try {
           const payload = verifyState(state, stateSecret);
           workspaceId = payload.workspace_id;
+          stateUserId = payload.user_id;
           isPublicFlow = payload.flow === "public" || !workspaceId;
         } catch (err) {
           console.error("State verification failed", err);
@@ -67,6 +69,24 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+          async function redirectWithMagicSignIn(email: string) {
+            const { data: magicLink, error: magicLinkError } = await supabaseAdmin.auth.admin.generateLink({
+              type: "magiclink",
+              email,
+              options: {
+                redirectTo: `${new URL(request.url).origin}/auth/slack/complete`,
+              },
+            });
+
+            const actionLink = magicLink.properties?.action_link;
+            if (magicLinkError || !actionLink) {
+              console.error("Failed to generate Slack sign-in link", magicLinkError);
+              return new Response("Slack connected, but sign-in could not be completed", { status: 500 });
+            }
+
+            return Response.redirect(actionLink, 302);
+          }
 
           let slackUserEmail: string | null = null;
           let slackUserName: string | null = null;
@@ -209,25 +229,30 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
           }
 
           if (isPublicFlow && slackUserEmail) {
-            const { data: magicLink, error: magicLinkError } = await supabaseAdmin.auth.admin.generateLink({
-              type: "magiclink",
-              email: slackUserEmail,
-              options: {
-                redirectTo: `${new URL(request.url).origin}/auth/slack/complete`,
-              },
-            });
-
-            const actionLink = magicLink.properties?.action_link;
-            if (magicLinkError || !actionLink) {
-              console.error("Failed to generate Slack sign-in link", magicLinkError);
-              return new Response("Slack connected, but sign-in could not be completed", { status: 500 });
-            }
-
             // Redirect the browser through Supabase's own verify endpoint.
             // Supabase sets the session tokens in the URL hash and then
             // redirects to /auth/slack/complete, where detectSessionInUrl
             // picks them up and persists the session before we navigate.
-            return Response.redirect(actionLink, 302);
+            return redirectWithMagicSignIn(slackUserEmail);
+          }
+
+          if (!isPublicFlow && stateUserId) {
+            const { data: profile } = await supabaseAdmin
+              .from("profiles")
+              .select("email")
+              .eq("id", stateUserId)
+              .maybeSingle();
+            let loginEmail = profile?.email ?? null;
+
+            if (!loginEmail) {
+              const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(stateUserId);
+              if (userError) console.error("Failed to load Slack installer user", userError);
+              loginEmail = userData.user?.email ?? null;
+            }
+
+            if (loginEmail) {
+              return redirectWithMagicSignIn(loginEmail);
+            }
           }
 
           return Response.redirect(`${new URL(request.url).origin}/dashboard?slack=connected`, 302);
