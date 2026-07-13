@@ -332,6 +332,8 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
   const metricsQuery = useQuery({ queryKey: ["dashboardMetrics"], queryFn: () => getDashboardMetrics(), enabled: isConnected });
   const digestQuery = useQuery({ queryKey: ["digest"], queryFn: () => listDigestEvents(), enabled: isConnected });
   const commitmentsQuery = useQuery({ queryKey: ["commitments"], queryFn: () => listCommitments(), enabled: isConnected });
+  const [openDigest, setOpenDigest] = useState<any | null>(null);
+  const [openCommit, setOpenCommit] = useState<any | null>(null);
   const m = metricsQuery.data;
   const digests = digestQuery.data ?? [];
   const priority = (commitmentsQuery.data ?? []).filter((c: any) => c.status === "pending").slice(0, 4);
