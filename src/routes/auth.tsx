@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,10 +15,16 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
   }),
-  component: AuthPage,
+  component: AuthShell,
 });
 
 type Mode = "signin" | "signup";
+
+function AuthShell() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  if (pathname === "/auth/slack/complete") return <Outlet />;
+  return <AuthPage />;
+}
 
 function AuthPage() {
   const navigate = useNavigate();
