@@ -1057,6 +1057,7 @@ function DigestView({ isConnected }: { isConnected: boolean }) {
           </div>
         </aside>
       </div>
+      <DigestDetailModal digest={openDigest} onClose={() => setOpenDigest(null)} />
     </div>
   );
 }
