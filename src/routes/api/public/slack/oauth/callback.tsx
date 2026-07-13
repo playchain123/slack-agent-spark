@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getSlackEnv,
+  normalizeReturnOrigin,
   verifyState,
 } from "@/lib/slack.server";
 
@@ -23,11 +24,13 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
 
         let workspaceId: string | undefined;
         let stateUserId: string | undefined;
+        let returnOrigin: string | null = null;
         let isPublicFlow = false;
         try {
           const payload = verifyState(state, stateSecret);
           workspaceId = payload.workspace_id;
           stateUserId = payload.user_id;
+          returnOrigin = normalizeReturnOrigin(payload.return_origin) ?? new URL(request.url).origin;
           isPublicFlow = payload.flow === "public" || !workspaceId;
         } catch (err) {
           console.error("State verification failed", err);
@@ -75,7 +78,7 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
               type: "magiclink",
               email,
               options: {
-                redirectTo: `${new URL(request.url).origin}/auth/slack/complete`,
+                redirectTo: `${returnOrigin ?? new URL(request.url).origin}/auth/slack/complete`,
               },
             });
 
@@ -255,7 +258,7 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
             }
           }
 
-          return Response.redirect(`${new URL(request.url).origin}/dashboard?slack=connected`, 302);
+          return Response.redirect(`${returnOrigin ?? new URL(request.url).origin}/dashboard?slack=connected`, 302);
         } catch (err) {
           console.error("OAuth callback error", err);
           return new Response("Internal error", { status: 500 });
