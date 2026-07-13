@@ -1001,18 +1001,19 @@ function DigestView({ isConnected }: { isConnected: boolean }) {
 
           <div className="space-y-3">
             {filtered.map((d: any) => (
-              <article key={d.id} className="rounded-xl border bg-white p-4" style={{ borderColor: c.outline }}>
+              <button key={d.id} onClick={() => setOpenDigest(d)}
+                className="w-full text-left rounded-xl border bg-white p-4 hover:shadow-sm transition-shadow" style={{ borderColor: c.outline }}>
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-[10.5px] font-bold px-2 py-0.5 rounded" style={{ background: "#000", color: "#fff" }}>#{d.channel_name}</span>
                     <span className="text-[10.5px] text-gray-500">{formatDistanceToNow(new Date(d.occurred_at), { addSuffix: true })}</span>
                   </div>
-                  <a href="https://slack.com" target="_blank" rel="noreferrer" className="text-[11px] font-semibold underline flex items-center gap-1">
-                    View in Slack <ExternalLink size={10} />
-                  </a>
+                  <span className="text-[11px] font-semibold underline flex items-center gap-1">
+                    Read full digest <ExternalLink size={10} />
+                  </span>
                 </div>
-                <div className="text-[12.5px] whitespace-pre-wrap leading-relaxed">{d.summary}</div>
-              </article>
+                <div className="text-[12.5px] whitespace-pre-wrap leading-relaxed line-clamp-5">{d.summary}</div>
+              </button>
             ))}
           </div>
         </section>
