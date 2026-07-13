@@ -419,15 +419,17 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
             ) : (
               <ul className="space-y-2">
                 {priority.map((p: any) => (
-                  <li key={p.id} className="flex items-start gap-2 text-[12px]">
-                    <div className="mt-1 w-3.5 h-3.5 rounded border shrink-0" style={{ borderColor: c.outline }} />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold truncate">{p.title}</div>
-                      <div className="text-[10.5px] text-gray-500 flex gap-2 mt-0.5">
-                        {p.due_date && <span>📅 {p.due_date}</span>}
-                        {p.channel_name && <span>#{p.channel_name}</span>}
+                  <li key={p.id}>
+                    <button onClick={() => setOpenCommit(p)} className="w-full text-left flex items-start gap-2 text-[12px] hover:bg-gray-50 rounded p-1 -m-1">
+                      <div className="mt-1 w-3.5 h-3.5 rounded border shrink-0" style={{ borderColor: c.outline }} />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold truncate">{p.title}</div>
+                        <div className="text-[10.5px] text-gray-500 flex gap-2 mt-0.5">
+                          {p.due_date && <span>📅 {p.due_date}</span>}
+                          {p.channel_name && <span>#{p.channel_name}</span>}
+                        </div>
                       </div>
-                    </div>
+                    </button>
                   </li>
                 ))}
               </ul>
