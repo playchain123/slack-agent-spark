@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "slack_installations_select_member" ON public.slack_installations;
