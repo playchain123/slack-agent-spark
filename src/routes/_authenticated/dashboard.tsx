@@ -128,9 +128,10 @@ function SlackSyncBanner({ channels, messages, syncing, error, result, onSync }:
       ? "Syncing recent Slack channels and messages into Trelo…"
       : result
         ? `Slack synced: ${result.messagesSynced ?? 0} recent messages across ${result.channelsSynced ?? channels} channels.`
-        : `${messages.toLocaleString()} Slack messages indexed across ${channels.toLocaleString()} channels.`;
+        : `${messages.toLocaleString()} Slack messages indexed across ${channels.toLocaleString()} channels. Re-sync to refresh message links.`;
 
-  if (!needsSync && !syncing && !error && !result) return null;
+  void needsSync;
+
 
   return (
     <div className="mx-6 mt-4 rounded-xl border p-4 flex items-center gap-4" style={{ background: error ? "#fef2f2" : "#eff6ff", borderColor: error ? "#fecaca" : "#bfdbfe" }}>
