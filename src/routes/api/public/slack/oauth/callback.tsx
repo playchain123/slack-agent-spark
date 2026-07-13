@@ -217,16 +217,17 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
               },
             });
 
-            const tokenHash = magicLink.properties?.hashed_token;
-            if (magicLinkError || !tokenHash) {
+            const actionLink = magicLink.properties?.action_link;
+            if (magicLinkError || !actionLink) {
               console.error("Failed to generate Slack sign-in link", magicLinkError);
               return new Response("Slack connected, but sign-in could not be completed", { status: 500 });
             }
 
-            return Response.redirect(
-              `${new URL(request.url).origin}/auth/slack/complete?token_hash=${encodeURIComponent(tokenHash)}`,
-              302,
-            );
+            // Redirect the browser through Supabase's own verify endpoint.
+            // Supabase sets the session tokens in the URL hash and then
+            // redirects to /auth/slack/complete, where detectSessionInUrl
+            // picks them up and persists the session before we navigate.
+            return Response.redirect(actionLink, 302);
           }
 
           return Response.redirect(`${new URL(request.url).origin}/dashboard?slack=connected`, 302);
