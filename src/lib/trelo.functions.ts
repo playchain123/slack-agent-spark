@@ -15,7 +15,7 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
     const since24 = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
     const since7 = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
 
-    const [m24, m7, openCommit, doneCommit, channels, latestDigest] = await Promise.all([
+    const [m24, m7, openCommit, doneCommit, channels, latestDigest, install] = await Promise.all([
       supabase.from("slack_messages").select("id", { count: "exact", head: true })
         .eq("workspace_id", w.workspaceId).gte("created_at", since24),
       supabase.from("slack_messages").select("id", { count: "exact", head: true })
@@ -28,6 +28,8 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
         .eq("workspace_id", w.workspaceId).limit(6),
       supabase.from("digest_events").select("id, summary, channel_name, occurred_at")
         .eq("workspace_id", w.workspaceId).order("occurred_at", { ascending: false }).limit(3),
+      supabase.from("slack_installations").select("slack_team_id")
+        .eq("workspace_id", w.workspaceId).maybeSingle(),
     ]);
 
     return {
@@ -37,8 +39,10 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
       doneCommitments: doneCommit.count ?? 0,
       channels: channels.data ?? [],
       latestDigest: latestDigest.data ?? [],
+      slackTeamId: (install.data as { slack_team_id?: string } | null)?.slack_team_id ?? null,
     };
   });
+
 
 // ---------- COMMITMENTS ----------
 export const listCommitments = createServerFn({ method: "GET" })

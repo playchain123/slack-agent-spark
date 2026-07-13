@@ -128,9 +128,10 @@ function SlackSyncBanner({ channels, messages, syncing, error, result, onSync }:
       ? "Syncing recent Slack channels and messages into Trelo…"
       : result
         ? `Slack synced: ${result.messagesSynced ?? 0} recent messages across ${result.channelsSynced ?? channels} channels.`
-        : `${messages.toLocaleString()} Slack messages indexed across ${channels.toLocaleString()} channels.`;
+        : `${messages.toLocaleString()} Slack messages indexed across ${channels.toLocaleString()} channels. Re-sync to refresh message links.`;
 
-  if (!needsSync && !syncing && !error && !result) return null;
+  void needsSync;
+
 
   return (
     <div className="mx-6 mt-4 rounded-xl border p-4 flex items-center gap-4" style={{ background: error ? "#fef2f2" : "#eff6ff", borderColor: error ? "#fecaca" : "#bfdbfe" }}>
@@ -354,12 +355,24 @@ function DashboardView({ isConnected, setView }: { isConnected: boolean; setView
                 <EmptyLine text="No channels indexed yet. Post in a channel your Trelo bot is in." />
               ) : (
                 <ul className="space-y-1.5">
-                  {m!.channels.map((ch: any) => (
-                    <li key={ch.id} className="text-[12.5px] flex items-center gap-2">
-                      <span className="text-gray-400">#</span>{ch.name ?? ch.slack_channel_id}
-                    </li>
-                  ))}
+                  {m!.channels.map((ch: any) => {
+                    const teamId = (m as any)?.slackTeamId;
+                    const href = teamId
+                      ? `https://app.slack.com/client/${teamId}/${ch.slack_channel_id}`
+                      : null;
+                    const content = (
+                      <><span className="text-gray-400">#</span>{ch.name ?? ch.slack_channel_id}</>
+                    );
+                    return (
+                      <li key={ch.id} className="text-[12.5px] flex items-center gap-2">
+                        {href ? (
+                          <a href={href} target="_blank" rel="noreferrer" className="hover:underline">{content}</a>
+                        ) : content}
+                      </li>
+                    );
+                  })}
                 </ul>
+
               )}
             </Card>
             <Card title="Latest digest" action={<button onClick={() => setView("digest")} className="text-[11px] font-semibold underline">Open</button>}>

@@ -130,6 +130,17 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const errors: string[] = [];
 
+  // Fetch team domain to build permalinks: https://{domain}.slack.com/archives/{channel}/p{ts_no_dot}
+  let teamDomain: string | null = null;
+  try {
+    const teamInfo = await slackApi<{ team?: { domain?: string } }>(botToken, "team.info");
+    teamDomain = teamInfo.team?.domain ?? null;
+  } catch (err) {
+    console.warn("team.info failed during Slack sync", err);
+  }
+  const buildPermalink = (channelId: string, ts: string) =>
+    teamDomain ? `https://${teamDomain}.slack.com/archives/${channelId}/p${ts.replace(".", "")}` : null;
+
   const channels = await listChannels(botToken, maxChannels);
   if (channels.length === 0) {
     return { channelsFound: 0, channelsSynced: 0, messagesSynced: 0, errors };
@@ -146,6 +157,7 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
     .from("slack_channels")
     .upsert(channelRows, { onConflict: "workspace_id,slack_channel_id" });
   if (channelError) throw new Error(`Could not save Slack channels: ${channelError.message}`);
+
 
   const messages: Array<{
     workspace_id: string;
@@ -196,11 +208,12 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
         slack_user_name: userId,
         text: message.text,
         ts: message.ts,
-        permalink: null,
+        permalink: buildPermalink(channel.id, message.ts),
         created_at: slackTimestampToIso(message.ts),
       });
     }
   }
+
 
   if (messages.length === 0) {
     return { channelsFound: channels.length, channelsSynced: channelRows.length, messagesSynced: 0, errors };
@@ -219,6 +232,24 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
       .upsert(chunk, { onConflict: "workspace_id,slack_channel_id,ts" });
     if (error) throw new Error(`Could not save Slack messages: ${error.message}`);
   }
+
+  // Backfill permalinks on any existing rows in this workspace that don't have one.
+  if (teamDomain) {
+    const { data: missing } = await supabaseAdmin
+      .from("slack_messages")
+      .select("id, slack_channel_id, ts")
+      .eq("workspace_id", workspaceId)
+      .is("permalink", null)
+      .limit(2000);
+    if (missing && missing.length > 0) {
+      for (const row of missing) {
+        const url = buildPermalink(row.slack_channel_id, row.ts);
+        if (!url) continue;
+        await supabaseAdmin.from("slack_messages").update({ permalink: url }).eq("id", row.id);
+      }
+    }
+  }
+
 
   return {
     channelsFound: channels.length,
