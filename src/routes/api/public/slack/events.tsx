@@ -189,7 +189,7 @@ async function extractCommitments({ workspaceId, event, userName, channelName, p
       owner_name: c.owner ?? userName ?? null,
       owner_slack_id: event.user ?? null,
       due_date: c.due && /^\d{4}-\d{2}-\d{2}/.test(c.due) ? c.due.slice(0, 10) : null,
-      status: "pending",
+      status: "suggested",
       priority: "normal",
       source_permalink: permalink,
       channel_name: channelName,
