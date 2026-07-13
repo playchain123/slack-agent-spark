@@ -5,12 +5,14 @@ import {
   createInstallState,
   getSlackEnv,
   buildSlackInstallUrl,
+  getCurrentRequestOrigin,
 } from "@/lib/slack.server";
 import { getCallerWorkspace } from "./workspace.server";
 
 export const getPublicSlackInstallUrl = createServerFn({ method: "POST" }).handler(async () => {
   const { clientId, stateSecret } = getSlackEnv();
-  const state = createPublicInstallState(stateSecret);
+  const returnOrigin = getCurrentRequestOrigin();
+  const state = createPublicInstallState(stateSecret, returnOrigin);
   const slackRedirectOrigin = "https://slack-agent-spark.lovable.app";
   const redirectUri = `${process.env.PUBLIC_ORIGIN ?? slackRedirectOrigin}/api/public/slack/oauth/callback`;
   return { url: buildSlackInstallUrl(clientId, state, redirectUri) };
@@ -27,7 +29,8 @@ export const getSlackInstallUrl = createServerFn({ method: "POST" })
     }
 
     const { clientId, stateSecret } = getSlackEnv();
-    const state = createInstallState(member.workspaceId, userId, stateSecret);
+    const returnOrigin = getCurrentRequestOrigin();
+    const state = createInstallState(member.workspaceId, userId, stateSecret, returnOrigin);
     const slackRedirectOrigin = "https://slack-agent-spark.lovable.app";
     const redirectUri = `${process.env.PUBLIC_ORIGIN ?? slackRedirectOrigin}/api/public/slack/oauth/callback`;
     return { url: buildSlackInstallUrl(clientId, state, redirectUri) };
