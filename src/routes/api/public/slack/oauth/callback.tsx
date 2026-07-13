@@ -4,7 +4,6 @@ import {
   normalizeReturnOrigin,
   verifyState,
 } from "@/lib/slack.server";
-import { syncWorkspaceSlack } from "@/lib/slack-sync.server";
 
 export const Route = createFileRoute("/api/public/slack/oauth/callback")({
   server: {
@@ -234,6 +233,7 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
 
           if (tokenData.access_token) {
             try {
+              const { syncWorkspaceSlack } = await import("@/lib/slack-sync.server");
               await syncWorkspaceSlack({
                 workspaceId,
                 botToken: tokenData.access_token,
