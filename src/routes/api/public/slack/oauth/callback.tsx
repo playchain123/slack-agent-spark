@@ -237,8 +237,8 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
               await syncWorkspaceSlack({
                 workspaceId,
                 botToken: tokenData.access_token,
-                maxChannels: 30,
-                messagesPerChannel: 30,
+                maxChannels: 12,
+                messagesPerChannel: 12,
                 joinPublicChannels: true,
               });
             } catch (syncError) {
