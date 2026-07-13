@@ -685,7 +685,9 @@ function AskView({ isConnected }: { isConnected: boolean }) {
             )}
             <div className="grid md:grid-cols-2 gap-3">
               {answers.map((a: any) => (
-                <AnswerCard key={a.id} question={a.question} answer={a.answer_md} sources={a.sources ?? []} timestamp={a.created_at} compact />
+                <button key={a.id} onClick={() => setOpenAnswer(a)} className="text-left">
+                  <AnswerCard question={a.question} answer={a.answer_md} sources={a.sources ?? []} timestamp={a.created_at} compact />
+                </button>
               ))}
             </div>
           </div>
