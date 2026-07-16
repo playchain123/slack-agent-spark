@@ -25,7 +25,8 @@ async function call(messages: Msg[], jsonMode: boolean): Promise<string> {
   if (!res.ok) {
     const body = await res.text();
     if (res.status === 429) throw new Error("AI rate limit — please retry in a moment.");
-    if (res.status === 402) throw new Error("AI credits exhausted. Add credits in Lovable settings.");
+    if (res.status === 402)
+      throw new Error("AI credits exhausted. Add credits in Lovable settings.");
     throw new Error(`AI error ${res.status}: ${body.slice(0, 300)}`);
   }
 
@@ -36,12 +37,21 @@ async function call(messages: Msg[], jsonMode: boolean): Promise<string> {
 }
 
 export async function aiText(system: string, user: string): Promise<string> {
-  return call([{ role: "system", content: system }, { role: "user", content: user }], false);
+  return call(
+    [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    false,
+  );
 }
 
 export async function aiJSON<T = unknown>(system: string, user: string): Promise<T> {
   const raw = await call(
-    [{ role: "system", content: system }, { role: "user", content: user }],
+    [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
     true,
   );
   try {

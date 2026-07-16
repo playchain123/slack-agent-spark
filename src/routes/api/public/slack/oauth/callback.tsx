@@ -1,9 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  getSlackEnv,
-  normalizeReturnOrigin,
-  verifyState,
-} from "@/lib/slack.server";
+import { getSlackEnv, normalizeReturnOrigin, verifyState } from "@/lib/slack.server";
 
 export const Route = createFileRoute("/api/public/slack/oauth/callback")({
   server: {
@@ -30,7 +26,8 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
           const payload = verifyState(state, stateSecret);
           workspaceId = payload.workspace_id;
           stateUserId = payload.user_id;
-          returnOrigin = normalizeReturnOrigin(payload.return_origin) ?? new URL(request.url).origin;
+          returnOrigin =
+            normalizeReturnOrigin(payload.return_origin) ?? new URL(request.url).origin;
           isPublicFlow = payload.flow === "public" || !workspaceId;
         } catch (err) {
           console.error("State verification failed", err);
@@ -74,18 +71,21 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
           async function redirectWithMagicSignIn(email: string) {
-            const { data: magicLink, error: magicLinkError } = await supabaseAdmin.auth.admin.generateLink({
-              type: "magiclink",
-              email,
-              options: {
-                redirectTo: `${returnOrigin ?? new URL(request.url).origin}/slack/complete`,
-              },
-            });
+            const { data: magicLink, error: magicLinkError } =
+              await supabaseAdmin.auth.admin.generateLink({
+                type: "magiclink",
+                email,
+                options: {
+                  redirectTo: `${returnOrigin ?? new URL(request.url).origin}/slack/complete`,
+                },
+              });
 
             const actionLink = magicLink.properties?.action_link;
             if (magicLinkError || !actionLink) {
               console.error("Failed to generate Slack sign-in link", magicLinkError);
-              return new Response("Slack connected, but sign-in could not be completed", { status: 500 });
+              return new Response("Slack connected, but sign-in could not be completed", {
+                status: 500,
+              });
             }
 
             return Response.redirect(actionLink, 302);
@@ -114,9 +114,12 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
 
           if (isPublicFlow) {
             if (!slackUserEmail) {
-              return new Response("Slack did not return an email address. Please allow email access and try again.", {
-                status: 400,
-              });
+              return new Response(
+                "Slack did not return an email address. Please allow email access and try again.",
+                {
+                  status: 400,
+                },
+              );
             }
 
             const { data: existingProfile } = await supabaseAdmin
@@ -127,14 +130,15 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
 
             let userId = existingProfile?.id;
             if (!userId) {
-              const { data: createdUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-                email: slackUserEmail,
-                email_confirm: true,
-                user_metadata: {
-                  full_name: slackUserName ?? slackUserEmail.split("@")[0],
-                  avatar_url: slackUserAvatar,
-                },
-              });
+              const { data: createdUser, error: createUserError } =
+                await supabaseAdmin.auth.admin.createUser({
+                  email: slackUserEmail,
+                  email_confirm: true,
+                  user_metadata: {
+                    full_name: slackUserName ?? slackUserEmail.split("@")[0],
+                    avatar_url: slackUserAvatar,
+                  },
+                });
 
               if (createUserError && !createUserError.message.toLowerCase().includes("already")) {
                 console.error("Failed to create Slack-auth user", createUserError);
@@ -145,8 +149,13 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
             }
 
             if (!userId) {
-              const { data: usersPage } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-              userId = usersPage.users.find((user) => user.email?.toLowerCase() === slackUserEmail.toLowerCase())?.id;
+              const { data: usersPage } = await supabaseAdmin.auth.admin.listUsers({
+                page: 1,
+                perPage: 1000,
+              });
+              userId = usersPage.users.find(
+                (user) => user.email?.toLowerCase() === slackUserEmail.toLowerCase(),
+              )?.id;
             }
 
             if (!userId) {
@@ -210,21 +219,19 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
             return new Response("Missing workspace for Slack installation", { status: 400 });
           }
 
-          const { error: upsertErr } = await supabaseAdmin
-            .from("slack_installations")
-            .upsert(
-              {
-                workspace_id: workspaceId,
-                slack_team_id: tokenData.team?.id ?? "",
-                slack_team_name: tokenData.team?.name ?? null,
-                bot_user_id: tokenData.bot_user_id ?? null,
-                bot_token: tokenData.access_token ?? "",
-                authed_user_id: tokenData.authed_user?.id ?? null,
-                scope: tokenData.scope ?? null,
-                installed_at: new Date().toISOString(),
-              },
-              { onConflict: "workspace_id" },
-            );
+          const { error: upsertErr } = await supabaseAdmin.from("slack_installations").upsert(
+            {
+              workspace_id: workspaceId,
+              slack_team_id: tokenData.team?.id ?? "",
+              slack_team_name: tokenData.team?.name ?? null,
+              bot_user_id: tokenData.bot_user_id ?? null,
+              bot_token: tokenData.access_token ?? "",
+              authed_user_id: tokenData.authed_user?.id ?? null,
+              scope: tokenData.scope ?? null,
+              installed_at: new Date().toISOString(),
+            },
+            { onConflict: "workspace_id" },
+          );
 
           if (upsertErr) {
             console.error("Failed to store Slack installation", upsertErr);
@@ -254,7 +261,10 @@ export const Route = createFileRoute("/api/public/slack/oauth/callback")({
             return redirectWithMagicSignIn(slackUserEmail);
           }
 
-          return Response.redirect(`${returnOrigin ?? new URL(request.url).origin}/dashboard?slack=connected`, 302);
+          return Response.redirect(
+            `${returnOrigin ?? new URL(request.url).origin}/dashboard?slack=connected`,
+            302,
+          );
         } catch (err) {
           console.error("OAuth callback error", err);
           return new Response("Internal error", { status: 500 });

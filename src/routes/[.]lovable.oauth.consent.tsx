@@ -62,26 +62,48 @@ function Consent() {
     const { data, error } = approve
       ? await ns.approveAuthorization(authorization_id)
       : await ns.denyAuthorization(authorization_id);
-    if (error) { setBusy(false); setError(error.message ?? String(error)); return; }
+    if (error) {
+      setBusy(false);
+      setError(error.message ?? String(error));
+      return;
+    }
     const target = data?.redirect_url ?? data?.redirect_to;
-    if (!target) { setBusy(false); setError("No redirect returned by the authorization server."); return; }
+    if (!target) {
+      setBusy(false);
+      setError("No redirect returned by the authorization server.");
+      return;
+    }
     window.location.href = target;
   }
 
   const clientName = details?.client?.name ?? details?.client?.client_name ?? "an app";
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6" style={{ background: "#faf7f8" }}>
-      <div className="w-full max-w-md bg-white rounded-xl border p-6 shadow-sm" style={{ borderColor: "#ebe7e8" }}>
+    <main
+      className="min-h-screen flex items-center justify-center p-6"
+      style={{ background: "#faf7f8" }}
+    >
+      <div
+        className="w-full max-w-md bg-white rounded-xl border p-6 shadow-sm"
+        style={{ borderColor: "#ebe7e8" }}
+      >
         <div className="flex items-center gap-2.5 mb-5">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-white text-lg" style={{ background: "#000" }}>T</div>
-          <div className="font-bold text-[15px]" style={{ color: "#1a0b1a" }}>Trelo</div>
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-white text-lg"
+            style={{ background: "#000" }}
+          >
+            T
+          </div>
+          <div className="font-bold text-[15px]" style={{ color: "#1a0b1a" }}>
+            Trelo
+          </div>
         </div>
         <h1 className="text-lg font-bold mb-1" style={{ color: "#1a0b1a" }}>
           Connect {clientName} to Trelo
         </h1>
         <p className="text-[13px] mb-4" style={{ color: "#6b5b6b" }}>
-          {clientName} will be able to call Trelo's tools (Ask Trelo, list commitments, get digests) while you are signed in{email ? ` as ${email}` : ""}.
+          {clientName} will be able to call Trelo's tools (Ask Trelo, list commitments, get digests)
+          while you are signed in{email ? ` as ${email}` : ""}.
         </p>
         <ul className="text-[12.5px] mb-5 space-y-1" style={{ color: "#3a2b3a" }}>
           <li>• Read your Slack messages indexed in Trelo</li>
@@ -92,7 +114,10 @@ function Consent() {
           This does not bypass Trelo's per-workspace permissions.
         </p>
         {error && (
-          <div className="text-[12px] rounded-md p-2.5 border mb-3" style={{ color: "#7f1d1d", background: "#fef2f2", borderColor: "#fecaca" }}>
+          <div
+            className="text-[12px] rounded-md p-2.5 border mb-3"
+            style={{ color: "#7f1d1d", background: "#fef2f2", borderColor: "#fecaca" }}
+          >
             {error}
           </div>
         )}

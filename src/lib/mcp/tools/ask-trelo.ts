@@ -17,7 +17,10 @@ export default defineTool({
     const w = await getWorkspace(sb, ctx.getUserId()!);
     if (!w) return noWorkspace();
 
-    const terms = question.split(/\s+/).filter((t) => t.length > 3).slice(0, 5);
+    const terms = question
+      .split(/\s+/)
+      .filter((t) => t.length > 3)
+      .slice(0, 5);
     let hits: any[] = [];
     if (terms.length) {
       const orExpr = terms.map((t) => `text.ilike.%${t.replace(/[%,]/g, "")}%`).join(",");
@@ -53,7 +56,10 @@ export default defineTool({
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) {
-      return { content: [{ type: "text", text: "AI unavailable (missing LOVABLE_API_KEY)" }], isError: true };
+      return {
+        content: [{ type: "text", text: "AI unavailable (missing LOVABLE_API_KEY)" }],
+        isError: true,
+      };
     }
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -73,7 +79,10 @@ export default defineTool({
     });
     if (!res.ok) {
       const body = await res.text();
-      return { content: [{ type: "text", text: `AI error ${res.status}: ${body.slice(0, 200)}` }], isError: true };
+      return {
+        content: [{ type: "text", text: `AI error ${res.status}: ${body.slice(0, 200)}` }],
+        isError: true,
+      };
     }
     const data = (await res.json()) as any;
     const answer = data.choices?.[0]?.message?.content ?? "";

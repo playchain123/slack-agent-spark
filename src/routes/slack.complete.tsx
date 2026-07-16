@@ -6,7 +6,10 @@ export const Route = createFileRoute("/slack/complete")({
   head: () => ({
     meta: [
       { title: "Connecting Slack — Trelo" },
-      { name: "description", content: "Completing Slack sign-in and opening your Trelo dashboard." },
+      {
+        name: "description",
+        content: "Completing Slack sign-in and opening your Trelo dashboard.",
+      },
     ],
   }),
   ssr: false,
@@ -57,8 +60,14 @@ function SlackAuthComplete() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#faf7f8" }}>
-      <div className="w-full max-w-sm rounded-xl border bg-white p-6 text-center shadow-sm" style={{ borderColor: "#ebe7e8" }}>
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: "#faf7f8" }}
+    >
+      <div
+        className="w-full max-w-sm rounded-xl border bg-white p-6 text-center shadow-sm"
+        style={{ borderColor: "#ebe7e8" }}
+      >
         <div className="mx-auto mb-4 grid h-10 w-10 place-items-center rounded-lg bg-black text-lg font-black text-white">
           T
         </div>

@@ -12,13 +12,19 @@ export default defineTool({
     const sb = supabaseForUser(ctx);
     const w = await getWorkspace(sb, ctx.getUserId()!);
     if (!w) return noWorkspace();
-    const { data, error } = await sb.from("slack_channels")
+    const { data, error } = await sb
+      .from("slack_channels")
       .select("name, slack_channel_id")
       .eq("workspace_id", w.workspaceId)
       .order("name");
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
-      content: [{ type: "text", text: (data ?? []).map((c: any) => `#${c.name}`).join("\n") || "No channels indexed yet." }],
+      content: [
+        {
+          type: "text",
+          text: (data ?? []).map((c: any) => `#${c.name}`).join("\n") || "No channels indexed yet.",
+        },
+      ],
       structuredContent: { channels: data ?? [] },
     };
   },

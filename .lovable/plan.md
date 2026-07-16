@@ -1,4 +1,3 @@
-
 # Trelo Dashboard — Full Functionality Plan
 
 Goal: every screen shows **real data from your Slack workspace** (no mocks), the AI works, and every button does something.
@@ -6,10 +5,12 @@ Goal: every screen shows **real data from your Slack workspace** (no mocks), the
 ---
 
 ## 1. Logout (quick win)
+
 - Add a **Log out** button in the sidebar footer + a user menu with avatar in the TopBar.
 - Wire to existing `useLogout()` (already in the codebase).
 
 ## 2. Ask Trelo — real AI chat over your Slack data
+
 - New route `/_authenticated/ask` (or keep view-switch, but persistent).
 - Chat UI: input box + streaming responses + message history.
 - Server function `askTrelo` that:
@@ -20,11 +21,13 @@ Goal: every screen shows **real data from your Slack workspace** (no mocks), the
 - Persist Q&A in existing `answers` table.
 
 ## 3. Commitments — auto-extracted action items
+
 - Background: when a new `slack_messages` row is inserted (already happening via events), run an AI extraction pass to detect commitments ("I'll send the doc by Friday", "@sam can you review…") and insert into `commitments` table.
 - UI: real list from `commitments` table, checkbox to mark done, filter by mine/all/open/done, links back to source Slack thread.
 - Server functions: `listCommitments`, `toggleCommitment`, `extractCommitmentsFromMessage`.
 
 ## 4. Activity Digest — daily rollup
+
 - Server function `getTodayDigest` that:
   - Reads today's `slack_messages` grouped by channel.
   - Uses Lovable AI to summarize into 3–6 bullets per channel + surface top decisions/blockers.
@@ -32,6 +35,7 @@ Goal: every screen shows **real data from your Slack workspace** (no mocks), the
 - UI: date picker, channel filter, "Regenerate" button.
 
 ## 5. Dashboard home — real metrics
+
 - Replace welcome placeholder with live tiles:
   - Messages indexed (24h / 7d)
   - Open commitments count
@@ -40,9 +44,11 @@ Goal: every screen shows **real data from your Slack workspace** (no mocks), the
 - All from real Supabase queries via server fns.
 
 ## 6. Search (TopBar)
+
 - Wire the search input to a real server fn that trigram-searches `slack_messages` and returns a dropdown of hits.
 
 ## 7. Slack event pipeline sanity pass
+
 - Verify `slack_event_queue` → `slack_messages` flow is actually populating on new Slack messages (I'll query the DB and spot-check).
 - Fix any gaps so #2–#5 have data to work on.
 

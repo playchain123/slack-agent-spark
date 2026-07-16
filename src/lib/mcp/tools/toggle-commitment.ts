@@ -14,10 +14,13 @@ export default defineTool({
   handler: async ({ id, done }, ctx) => {
     if (!ctx.isAuthenticated()) return notAuthed();
     const sb = supabaseForUser(ctx);
-    const { error } = await sb.from("commitments").update({
-      status: done ? "done" : "open",
-      completed_at: done ? new Date().toISOString() : null,
-    }).eq("id", id);
+    const { error } = await sb
+      .from("commitments")
+      .update({
+        status: done ? "done" : "open",
+        completed_at: done ? new Date().toISOString() : null,
+      })
+      .eq("id", id);
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return { content: [{ type: "text", text: `Commitment ${id} → ${done ? "done" : "open"}` }] };
   },

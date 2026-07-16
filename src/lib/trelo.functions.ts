@@ -15,34 +15,69 @@ export const getDashboardMetrics = createServerFn({ method: "GET" })
     const since24 = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
     const since7 = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
 
-    const [m24, m7, openCommit, suggestedCommit, doneCommit, channels, latestDigest, install] = await Promise.all([
-      supabase.from("slack_messages").select("id", { count: "exact", head: true })
-        .eq("workspace_id", w.workspaceId).gte("created_at", since24),
-      supabase.from("slack_messages").select("id", { count: "exact", head: true })
-        .eq("workspace_id", w.workspaceId).gte("created_at", since7),
-      supabase.from("commitments").select("id", { count: "exact", head: true })
-        .eq("workspace_id", w.workspaceId).eq("status", "pending"),
-      supabase.from("commitments").select("id", { count: "exact", head: true })
-        .eq("workspace_id", w.workspaceId).eq("status", "suggested"),
-      supabase.from("commitments").select("id", { count: "exact", head: true })
-        .eq("workspace_id", w.workspaceId).eq("status", "done"),
-      supabase.from("slack_channels").select("id, name, slack_channel_id")
-        .eq("workspace_id", w.workspaceId).order("name", { ascending: true }).limit(12),
-      supabase.from("digest_events").select("id, summary, channel_name, occurred_at")
-        .eq("workspace_id", w.workspaceId).order("occurred_at", { ascending: false }).limit(3),
-      supabase.from("slack_installations").select("slack_team_id")
-        .eq("workspace_id", w.workspaceId).maybeSingle(),
-    ]);
+    const [m24, m7, openCommit, suggestedCommit, doneCommit, channels, latestDigest, install] =
+      await Promise.all([
+        supabase
+          .from("slack_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", w.workspaceId)
+          .gte("created_at", since24),
+        supabase
+          .from("slack_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", w.workspaceId)
+          .gte("created_at", since7),
+        supabase
+          .from("commitments")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", w.workspaceId)
+          .eq("status", "pending"),
+        supabase
+          .from("commitments")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", w.workspaceId)
+          .eq("status", "suggested"),
+        supabase
+          .from("commitments")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", w.workspaceId)
+          .eq("status", "done"),
+        supabase
+          .from("slack_channels")
+          .select("id, name, slack_channel_id")
+          .eq("workspace_id", w.workspaceId)
+          .order("name", { ascending: true })
+          .limit(12),
+        supabase
+          .from("digest_events")
+          .select("id, summary, channel_name, occurred_at")
+          .eq("workspace_id", w.workspaceId)
+          .order("occurred_at", { ascending: false })
+          .limit(3),
+        supabase
+          .from("slack_installations")
+          .select("slack_team_id")
+          .eq("workspace_id", w.workspaceId)
+          .maybeSingle(),
+      ]);
 
     const channelRows = channels.data ?? [];
     const channelCounts = await Promise.all(
       channelRows.map(async (channel: any) => {
         const [messages, latest] = await Promise.all([
-          supabase.from("slack_messages").select("id", { count: "exact", head: true })
-            .eq("workspace_id", w.workspaceId).eq("slack_channel_id", channel.slack_channel_id),
-          supabase.from("slack_messages").select("text, slack_user_name, created_at, permalink")
-            .eq("workspace_id", w.workspaceId).eq("slack_channel_id", channel.slack_channel_id)
-            .order("created_at", { ascending: false }).limit(1).maybeSingle(),
+          supabase
+            .from("slack_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("workspace_id", w.workspaceId)
+            .eq("slack_channel_id", channel.slack_channel_id),
+          supabase
+            .from("slack_messages")
+            .select("text, slack_user_name, created_at, permalink")
+            .eq("workspace_id", w.workspaceId)
+            .eq("slack_channel_id", channel.slack_channel_id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
         ]);
         return {
           ...channel,
@@ -81,11 +116,19 @@ export const listSlackChannels = createServerFn({ method: "GET" })
     const withCounts = await Promise.all(
       rows.map(async (channel: any) => {
         const [count, latest] = await Promise.all([
-          supabase.from("slack_messages").select("id", { count: "exact", head: true })
-            .eq("workspace_id", w.workspaceId).eq("slack_channel_id", channel.slack_channel_id),
-          supabase.from("slack_messages").select("text, slack_user_name, created_at, permalink")
-            .eq("workspace_id", w.workspaceId).eq("slack_channel_id", channel.slack_channel_id)
-            .order("created_at", { ascending: false }).limit(1).maybeSingle(),
+          supabase
+            .from("slack_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("workspace_id", w.workspaceId)
+            .eq("slack_channel_id", channel.slack_channel_id),
+          supabase
+            .from("slack_messages")
+            .select("text, slack_user_name, created_at, permalink")
+            .eq("workspace_id", w.workspaceId)
+            .eq("slack_channel_id", channel.slack_channel_id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
         ]);
         return {
           ...channel,
@@ -100,7 +143,11 @@ export const listSlackChannels = createServerFn({ method: "GET" })
 
 export const listChannelMessages = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ channelId: z.string().min(1), limit: z.number().int().min(1).max(100).optional() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({ channelId: z.string().min(1), limit: z.number().int().min(1).max(100).optional() })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const w = await getCallerWorkspace(supabase, userId);
@@ -116,7 +163,6 @@ export const listChannelMessages = createServerFn({ method: "POST" })
 
     return messages ?? [];
   });
-
 
 // ---------- COMMITMENTS ----------
 export const listCommitments = createServerFn({ method: "GET" })
@@ -136,9 +182,7 @@ export const listCommitments = createServerFn({ method: "GET" })
 
 export const toggleCommitment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ id: z.string().uuid(), done: z.boolean() }).parse(d),
-  )
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), done: z.boolean() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const status = data.done ? "done" : "pending";
@@ -163,27 +207,33 @@ export const deleteCommitment = createServerFn({ method: "POST" })
 export const createCommitment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      title: z.string().min(1),
-      due_date: z.string().nullable().optional(),
-      priority: z.enum(["low", "normal", "high"]).optional(),
-      channel_name: z.string().nullable().optional(),
-      source_permalink: z.string().nullable().optional(),
-    }).parse(d),
+    z
+      .object({
+        title: z.string().min(1),
+        due_date: z.string().nullable().optional(),
+        priority: z.enum(["low", "normal", "high"]).optional(),
+        channel_name: z.string().nullable().optional(),
+        source_permalink: z.string().nullable().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const w = await getCallerWorkspace(supabase, userId);
     if (!w) throw new Error("No workspace");
-    const { data: row, error } = await supabase.from("commitments").insert({
-      workspace_id: w.workspaceId,
-      title: data.title,
-      due_date: data.due_date ?? null,
-      priority: data.priority ?? "normal",
-      status: "pending",
-      channel_name: data.channel_name ?? null,
-      source_permalink: data.source_permalink ?? null,
-    }).select("*").single();
+    const { data: row, error } = await supabase
+      .from("commitments")
+      .insert({
+        workspace_id: w.workspaceId,
+        title: data.title,
+        due_date: data.due_date ?? null,
+        priority: data.priority ?? "normal",
+        status: "pending",
+        channel_name: data.channel_name ?? null,
+        source_permalink: data.source_permalink ?? null,
+      })
+      .select("*")
+      .single();
     if (error) throw new Error(error.message);
     return row;
   });
@@ -203,7 +253,9 @@ export const acceptCommitmentSuggestion = createServerFn({ method: "POST" })
 
 export const generateCommitmentSuggestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ channelId: z.string().min(1).optional() }).parse(d ?? {}))
+  .inputValidator((d: unknown) =>
+    z.object({ channelId: z.string().min(1).optional() }).parse(d ?? {}),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const w = await getCallerWorkspace(supabase, userId);
@@ -241,8 +293,15 @@ export const generateCommitmentSuggestions = createServerFn({ method: "POST" })
         .map((m: any, index: number) => `[${index + 1}] ${m.slack_user_name ?? "user"}: ${m.text}`)
         .join("\n");
 
-      const extracted = await aiJSON<{ tasks?: Array<{ title: string; owner?: string | null; due?: string | null; source?: number | null }> }>(
-        "You suggest actionable tasks from Slack channel messages. Return JSON only: {\"tasks\":[{\"title\":string,\"owner\":string|null,\"due\":string|null,\"source\":number|null}]}. Suggest only useful tasks grounded in the messages. Do not invent owners or dates. Limit to 5 tasks.",
+      const extracted = await aiJSON<{
+        tasks?: Array<{
+          title: string;
+          owner?: string | null;
+          due?: string | null;
+          source?: number | null;
+        }>;
+      }>(
+        'You suggest actionable tasks from Slack channel messages. Return JSON only: {"tasks":[{"title":string,"owner":string|null,"due":string|null,"source":number|null}]}. Suggest only useful tasks grounded in the messages. Do not invent owners or dates. Limit to 5 tasks.',
         `Channel: #${channel.name ?? channel.slack_channel_id}\n\nMessages:\n${transcript}`,
       );
 
@@ -256,10 +315,14 @@ export const generateCommitmentSuggestions = createServerFn({ method: "POST" })
         .select("title")
         .eq("workspace_id", w.workspaceId)
         .in("title", titles);
-      const existingTitles = new Set((existing ?? []).map((row: any) => String(row.title).toLowerCase()));
+      const existingTitles = new Set(
+        (existing ?? []).map((row: any) => String(row.title).toLowerCase()),
+      );
 
       const rows = tasks
-        .filter((task) => task.title?.trim() && !existingTitles.has(task.title.trim().toLowerCase()))
+        .filter(
+          (task) => task.title?.trim() && !existingTitles.has(task.title.trim().toLowerCase()),
+        )
         .map((task) => {
           const sourceIndex = typeof task.source === "number" ? task.source - 1 : 0;
           const source = messages.slice().reverse()[sourceIndex] ?? messages[0];
@@ -267,7 +330,8 @@ export const generateCommitmentSuggestions = createServerFn({ method: "POST" })
             workspace_id: w.workspaceId,
             title: task.title.trim(),
             owner_name: task.owner ?? null,
-            due_date: task.due && /^\d{4}-\d{2}-\d{2}/.test(task.due) ? task.due.slice(0, 10) : null,
+            due_date:
+              task.due && /^\d{4}-\d{2}-\d{2}/.test(task.due) ? task.due.slice(0, 10) : null,
             priority: "normal",
             status: "suggested",
             channel_name: channel.name ?? null,
@@ -284,7 +348,10 @@ export const generateCommitmentSuggestions = createServerFn({ method: "POST" })
 
     return {
       generated: created,
-      message: created > 0 ? `Suggested ${created} task${created === 1 ? "" : "s"}. Review and add the ones you want.` : "No new task suggestions found.",
+      message:
+        created > 0
+          ? `Suggested ${created} task${created === 1 ? "" : "s"}. Review and add the ones you want.`
+          : "No new task suggestions found.",
     };
   });
 
@@ -372,7 +439,9 @@ export const generateDigest = createServerFn({ method: "POST" })
 // ---------- ASK TRELO ----------
 export const listRecentAnswers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ channelId: z.string().min(1).optional() }).parse(d ?? {}))
+  .inputValidator((d: unknown) =>
+    z.object({ channelId: z.string().min(1).optional() }).parse(d ?? {}),
+  )
   .handler(async ({ data: input, context }) => {
     const { supabase, userId } = context;
     const w = await getCallerWorkspace(supabase, userId);
@@ -386,14 +455,20 @@ export const listRecentAnswers = createServerFn({ method: "POST" })
     const rows = data ?? [];
     const channelId = input.channelId;
     if (!channelId) return rows;
-    return rows.filter((row: any) =>
-      Array.isArray(row.sources) && row.sources.some((source: any) => source.channelId === channelId),
+    return rows.filter(
+      (row: any) =>
+        Array.isArray(row.sources) &&
+        row.sources.some((source: any) => source.channelId === channelId),
     );
   });
 
 export const askTrelo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ question: z.string().min(2).max(2000), channelId: z.string().min(1).optional() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({ question: z.string().min(2).max(2000), channelId: z.string().min(1).optional() })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const w = await getCallerWorkspace(supabase, userId);
@@ -407,7 +482,9 @@ export const askTrelo = createServerFn({ method: "POST" })
       .select("slack_channel_id, name")
       .eq("workspace_id", w.workspaceId);
     const chanMap = new Map((channels ?? []).map((c: any) => [c.slack_channel_id, c.name]));
-    const selectedChannelName = selectedChannelId ? chanMap.get(selectedChannelId) ?? selectedChannelId : null;
+    const selectedChannelName = selectedChannelId
+      ? (chanMap.get(selectedChannelId) ?? selectedChannelId)
+      : null;
 
     // 1. Slack Real-Time Search API — live Slack results (semantic on AI-enabled workspaces)
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -421,7 +498,10 @@ export const askTrelo = createServerFn({ method: "POST" })
 
     // 2. Indexed DB retrieval as augmentation / fallback
     let indexed: any[] = [];
-    const terms = q.split(/\s+/).filter((t) => t.length > 3).slice(0, 5);
+    const terms = q
+      .split(/\s+/)
+      .filter((t) => t.length > 3)
+      .slice(0, 5);
     if (terms.length > 0) {
       const orExpr = terms.map((t) => `text.ilike.%${t.replace(/[%,]/g, "")}%`).join(",");
       let dbQuery = supabase
@@ -439,7 +519,9 @@ export const askTrelo = createServerFn({ method: "POST" })
         .select("slack_channel_id, slack_user_name, text, ts, permalink, created_at")
         .eq("workspace_id", w.workspaceId);
       if (selectedChannelId) recentQuery = recentQuery.eq("slack_channel_id", selectedChannelId);
-      const { data: recent } = await recentQuery.order("created_at", { ascending: false }).limit(30);
+      const { data: recent } = await recentQuery
+        .order("created_at", { ascending: false })
+        .limit(30);
       indexed = recent ?? [];
     }
 
@@ -463,10 +545,9 @@ export const askTrelo = createServerFn({ method: "POST" })
 
     if (merged.length === 0) {
       return {
-        answer:
-          selectedChannelName
-            ? `I don't have indexed messages for #${selectedChannelName} yet. Sync Slack, then ask again.`
-            : "I don't have any Slack messages to search yet. Once your team posts in Slack (or reconnects with search scopes), I'll be able to answer.",
+        answer: selectedChannelName
+          ? `I don't have indexed messages for #${selectedChannelName} yet. Sync Slack, then ask again.`
+          : "I don't have any Slack messages to search yet. Once your team posts in Slack (or reconnects with search scopes), I'll be able to answer.",
         sources: [],
       };
     }
@@ -499,7 +580,13 @@ export const askTrelo = createServerFn({ method: "POST" })
       sources,
     });
 
-    return { answer, sources, usedRealtimeSearch: liveHits.length > 0, channelId: selectedChannelId ?? null, channelName: selectedChannelName };
+    return {
+      answer,
+      sources,
+      usedRealtimeSearch: liveHits.length > 0,
+      channelId: selectedChannelId ?? null,
+      channelName: selectedChannelName,
+    };
   });
 
 // ---------- SEARCH ----------

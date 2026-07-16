@@ -16,8 +16,12 @@ export default defineTool({
     const sb = supabaseForUser(ctx);
     const w = await getWorkspace(sb, ctx.getUserId()!);
     if (!w) return noWorkspace();
-    let q = sb.from("commitments").select("*").eq("workspace_id", w.workspaceId)
-      .order("created_at", { ascending: false }).limit(limit);
+    let q = sb
+      .from("commitments")
+      .select("*")
+      .eq("workspace_id", w.workspaceId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
     if (status !== "all") q = q.eq("status", status);
     const { data, error } = await q;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };

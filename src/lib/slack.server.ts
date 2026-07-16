@@ -17,9 +17,14 @@ export function normalizeReturnOrigin(value?: string | null): string | null {
     const host = url.hostname.toLowerCase();
     const isLocalhost = host === "localhost" || host === "127.0.0.1";
     const isLovableHost = host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com");
-    const configuredHost = process.env.PUBLIC_ORIGIN ? new URL(process.env.PUBLIC_ORIGIN).hostname.toLowerCase() : null;
+    const configuredHost = process.env.PUBLIC_ORIGIN
+      ? new URL(process.env.PUBLIC_ORIGIN).hostname.toLowerCase()
+      : null;
     const isConfiguredHost = configuredHost ? host === configuredHost : false;
-    if ((url.protocol === "https:" && (isLovableHost || isConfiguredHost)) || (url.protocol === "http:" && isLocalhost)) {
+    if (
+      (url.protocol === "https:" && (isLovableHost || isConfiguredHost)) ||
+      (url.protocol === "http:" && isLocalhost)
+    ) {
       return url.origin;
     }
   } catch {
@@ -92,7 +97,12 @@ export function verifyState(token: string, secret: string): SlackStatePayload {
   return payload;
 }
 
-export function createInstallState(workspaceId: string, userId: string, secret: string, returnOrigin?: string | null): string {
+export function createInstallState(
+  workspaceId: string,
+  userId: string,
+  secret: string,
+  returnOrigin?: string | null,
+): string {
   const payload: SlackStatePayload = {
     workspace_id: workspaceId,
     user_id: userId,

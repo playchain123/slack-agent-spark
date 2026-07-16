@@ -81,7 +81,9 @@ async function listChannels(botToken: string, maxChannels: number) {
     });
 
     if (!data.ok) {
-      throw new Error(`Slack channel list failed: ${data.error ?? "unknown"}${data.needed ? ` (${data.needed})` : ""}`);
+      throw new Error(
+        `Slack channel list failed: ${data.error ?? "unknown"}${data.needed ? ` (${data.needed})` : ""}`,
+      );
     }
 
     channels.push(...(data.channels ?? []));
@@ -99,9 +101,14 @@ async function resolveUsers(botToken: string, workspaceId: string, userIds: stri
     .eq("workspace_id", workspaceId)
     .maybeSingle();
 
-  const cache = ((installation?.user_cache as Record<string, string> | null) ?? {}) as Record<string, string>;
+  const cache = ((installation?.user_cache as Record<string, string> | null) ?? {}) as Record<
+    string,
+    string
+  >;
   const nextCache = { ...cache };
-  const unique = Array.from(new Set(userIds)).filter((id) => id && !nextCache[id]).slice(0, 80);
+  const unique = Array.from(new Set(userIds))
+    .filter((id) => id && !nextCache[id])
+    .slice(0, 80);
 
   for (const user of unique) {
     try {
@@ -113,7 +120,10 @@ async function resolveUsers(botToken: string, workspaceId: string, userIds: stri
   }
 
   if (unique.length > 0) {
-    await supabaseAdmin.from("slack_installations").update({ user_cache: nextCache }).eq("workspace_id", workspaceId);
+    await supabaseAdmin
+      .from("slack_installations")
+      .update({ user_cache: nextCache })
+      .eq("workspace_id", workspaceId);
   }
 
   return nextCache;
@@ -139,7 +149,9 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
     console.warn("team.info failed during Slack sync", err);
   }
   const buildPermalink = (channelId: string, ts: string) =>
-    teamDomain ? `https://${teamDomain}.slack.com/archives/${channelId}/p${ts.replace(".", "")}` : null;
+    teamDomain
+      ? `https://${teamDomain}.slack.com/archives/${channelId}/p${ts.replace(".", "")}`
+      : null;
 
   const channels = await listChannels(botToken, maxChannels);
   if (channels.length === 0) {
@@ -158,7 +170,6 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
     .upsert(channelRows, { onConflict: "workspace_id,slack_channel_id" });
   if (channelError) throw new Error(`Could not save Slack channels: ${channelError.message}`);
 
-
   const messages: Array<{
     workspace_id: string;
     slack_channel_id: string;
@@ -175,7 +186,9 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
     let canRead = Boolean(channel.is_member || channel.is_private === false);
 
     if (joinPublicChannels && !channel.is_private && !channel.is_member) {
-      const joined = await slackApi<{ channel?: SlackChannel }>(botToken, "conversations.join", { channel: channel.id });
+      const joined = await slackApi<{ channel?: SlackChannel }>(botToken, "conversations.join", {
+        channel: channel.id,
+      });
       if (joined.ok || joined.error === "already_in_channel") {
         canRead = true;
       } else {
@@ -186,10 +199,14 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
 
     if (!canRead) continue;
 
-    const history = await slackApi<{ messages?: SlackMessage[] }>(botToken, "conversations.history", {
-      channel: channel.id,
-      limit: String(messagesPerChannel),
-    });
+    const history = await slackApi<{ messages?: SlackMessage[] }>(
+      botToken,
+      "conversations.history",
+      {
+        channel: channel.id,
+        limit: String(messagesPerChannel),
+      },
+    );
 
     if (!history.ok) {
       errors.push(`#${channel.name ?? channel.id}: ${history.error ?? "history failed"}`);
@@ -214,15 +231,21 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
     }
   }
 
-
   if (messages.length === 0) {
-    return { channelsFound: channels.length, channelsSynced: channelRows.length, messagesSynced: 0, errors };
+    return {
+      channelsFound: channels.length,
+      channelsSynced: channelRows.length,
+      messagesSynced: 0,
+      errors,
+    };
   }
 
   const users = await resolveUsers(botToken, workspaceId, userIds);
   const rows = messages.map((message) => ({
     ...message,
-    slack_user_name: message.slack_user_id ? (users[message.slack_user_id] ?? message.slack_user_id) : null,
+    slack_user_name: message.slack_user_id
+      ? (users[message.slack_user_id] ?? message.slack_user_id)
+      : null,
   }));
 
   for (let i = 0; i < rows.length; i += 500) {
@@ -249,7 +272,6 @@ export async function syncWorkspaceSlack(options: SyncOptions) {
       }
     }
   }
-
 
   return {
     channelsFound: channels.length,

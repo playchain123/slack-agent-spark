@@ -5,9 +5,7 @@
   "auth": {
     "type": "oauth",
     "issuer": "https://uzksrrruxbyyvtmbnsig.supabase.co/auth/v1",
-    "accepted_audiences": [
-      "authenticated"
-    ]
+    "accepted_audiences": ["authenticated"]
   },
   "mcp": {
     "server": {
@@ -35,9 +33,7 @@
               "description": "The question to answer from Slack context."
             }
           },
-          "required": [
-            "question"
-          ]
+          "required": ["question"]
         },
         "outputSchema": null
       },
@@ -57,11 +53,7 @@
               "default": "open",
               "description": "Filter by status.",
               "type": "string",
-              "enum": [
-                "open",
-                "done",
-                "all"
-              ]
+              "enum": ["open", "done", "all"]
             },
             "limit": {
               "default": 50,
@@ -96,10 +88,7 @@
               "description": "true to mark done, false to reopen."
             }
           },
-          "required": [
-            "id",
-            "done"
-          ]
+          "required": ["id", "done"]
         },
         "outputSchema": null
       },

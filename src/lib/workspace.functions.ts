@@ -25,7 +25,9 @@ export const getMyWorkspace = createServerFn({ method: "GET" })
       .select("id, workspace_id, slack_team_id, slack_team_name, bot_user_id, installed_at")
       .in("workspace_id", workspaceIds);
 
-    const installByWorkspace = new Map((installations ?? []).map((install: any) => [install.workspace_id, install]));
+    const installByWorkspace = new Map(
+      (installations ?? []).map((install: any) => [install.workspace_id, install]),
+    );
     const membership =
       memberships.find((row: any) => installByWorkspace.has(row.workspace_id)) ??
       memberships.find((row: any) => row.role === "owner") ??

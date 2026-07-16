@@ -73,7 +73,9 @@ async function processEvent(teamId: string, event: any) {
   const botToken = installation.bot_token as string | null;
 
   if (event.type === "app_home_opened" && botToken && event.user) {
-    await publishAppHome(botToken, event.user).catch((err) => console.error("views.publish failed", err));
+    await publishAppHome(botToken, event.user).catch((err) =>
+      console.error("views.publish failed", err),
+    );
     return;
   }
 
@@ -81,7 +83,12 @@ async function processEvent(teamId: string, event: any) {
     const channel = event.channel ?? event.channel_id ?? event.assistant_thread?.channel_id;
     const threadTs = event.thread_ts ?? event.assistant_thread?.thread_ts ?? event.ts;
     if (channel) {
-      await postSlackMessage(botToken, channel, "Ask me anything about this workspace’s indexed Slack history. For best results, ask inside Trelo’s dashboard by channel.", threadTs);
+      await postSlackMessage(
+        botToken,
+        channel,
+        "Ask me anything about this workspace’s indexed Slack history. For best results, ask inside Trelo’s dashboard by channel.",
+        threadTs,
+      );
     }
     return;
   }
@@ -162,7 +169,9 @@ async function processEvent(teamId: string, event: any) {
         text: event.text,
         ts: event.ts ?? null,
         permalink,
-        created_at: event.ts ? new Date(Math.floor(Number.parseFloat(event.ts) * 1000)).toISOString() : undefined,
+        created_at: event.ts
+          ? new Date(Math.floor(Number.parseFloat(event.ts) * 1000)).toISOString()
+          : undefined,
       },
       { onConflict: "workspace_id,slack_channel_id,ts" },
     )
@@ -204,7 +213,12 @@ async function slackApi(botToken: string, method: string, body: Record<string, u
   return data;
 }
 
-async function postSlackMessage(botToken: string, channel: string, text: string, threadTs?: string | null) {
+async function postSlackMessage(
+  botToken: string,
+  channel: string,
+  text: string,
+  threadTs?: string | null,
+) {
   await slackApi(botToken, "chat.postMessage", {
     channel,
     text,
@@ -219,14 +233,31 @@ async function publishAppHome(botToken: string, userId: string) {
       type: "home",
       blocks: [
         { type: "header", text: { type: "plain_text", text: "Trelo" } },
-        { type: "section", text: { type: "mrkdwn", text: "Ask Trelo about indexed Slack channels, review suggested tasks, and open channel digests in the Trelo dashboard." } },
-        { type: "section", text: { type: "mrkdwn", text: "If Slack shows messages are turned off, enable the App Home Messages tab in your Slack app settings, then reinstall the app." } },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "Ask Trelo about indexed Slack channels, review suggested tasks, and open channel digests in the Trelo dashboard.",
+          },
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "If Slack shows messages are turned off, enable the App Home Messages tab in your Slack app settings, then reinstall the app.",
+          },
+        },
       ],
     },
   });
 }
 
-async function answerSlackQuestion({ workspaceId, botToken, event, channelName }: {
+async function answerSlackQuestion({
+  workspaceId,
+  botToken,
+  event,
+  channelName,
+}: {
   workspaceId: string;
   botToken: string;
   event: any;
@@ -250,15 +281,26 @@ async function answerSlackQuestion({ workspaceId, botToken, event, channelName }
 
   const answer = transcript
     ? await aiText(
-      "You are Trelo inside Slack. Answer from the provided channel messages only. Keep it concise and cite [n]. If the answer is not in the messages, say so.",
-      `Channel: #${channelName ?? event.channel}\nQuestion: ${event.text}\n\nMessages:\n${transcript}`,
-    )
+        "You are Trelo inside Slack. Answer from the provided channel messages only. Keep it concise and cite [n]. If the answer is not in the messages, say so.",
+        `Channel: #${channelName ?? event.channel}\nQuestion: ${event.text}\n\nMessages:\n${transcript}`,
+      )
     : "I do not have indexed messages for this channel yet. Open Trelo and sync Slack first.";
 
-  await postSlackMessage(botToken, event.channel, answer.slice(0, 2800), event.thread_ts ?? event.ts);
+  await postSlackMessage(
+    botToken,
+    event.channel,
+    answer.slice(0, 2800),
+    event.thread_ts ?? event.ts,
+  );
 }
 
-async function extractCommitments({ workspaceId, event, userName, channelName, permalink }: {
+async function extractCommitments({
+  workspaceId,
+  event,
+  userName,
+  channelName,
+  permalink,
+}: {
   workspaceId: string;
   event: any;
   userName: string | null;
@@ -267,8 +309,10 @@ async function extractCommitments({ workspaceId, event, userName, channelName, p
 }) {
   const { aiJSON } = await import("@/lib/ai.server");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const extracted = await aiJSON<{ commitments: Array<{ title: string; owner?: string; due?: string | null }> }>(
-    "You are an assistant that extracts ACTION ITEMS or COMMITMENTS from a single Slack message. Return JSON: { \"commitments\": [{ \"title\": string, \"owner\": string|null, \"due\": string|null }] }. Only extract explicit commitments like 'I will do X by Friday' or 'Can you review this by tomorrow'. If none, return an empty array. Do not invent tasks.",
+  const extracted = await aiJSON<{
+    commitments: Array<{ title: string; owner?: string; due?: string | null }>;
+  }>(
+    'You are an assistant that extracts ACTION ITEMS or COMMITMENTS from a single Slack message. Return JSON: { "commitments": [{ "title": string, "owner": string|null, "due": string|null }] }. Only extract explicit commitments like \'I will do X by Friday\' or \'Can you review this by tomorrow\'. If none, return an empty array. Do not invent tasks.',
     `Message from ${userName ?? "user"} in #${channelName ?? "channel"}:\n${event.text}`,
   );
 
