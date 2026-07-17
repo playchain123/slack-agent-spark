@@ -514,13 +514,15 @@ function HowItWorksSection() {
   useEffect(() => {
     let ctx = gsap.context(() => {
       gsap.from(".step-card", {
-        scale: 0.95,
+        y: 60,
         opacity: 0,
         duration: 1,
         stagger: 0.2,
+        ease: "power3.out",
         scrollTrigger: {
           trigger: container.current,
-          start: "top 80%",
+          start: "top 75%",
+          toggleActions: "play none none reverse"
         }
       });
     }, container);
@@ -536,17 +538,23 @@ function HowItWorksSection() {
   return (
     <section ref={container} className="py-32 bg-[#f8f9fa] text-black px-6 font-poppins border-t border-black/5">
       <div className="max-w-[1200px] mx-auto text-center">
-        <h2 className="text-4xl md:text-5xl font-medium tracking-tight mb-16">
+        <h2 className="text-4xl md:text-5xl font-medium tracking-tight mb-20">
           How it <span className="font-light">works</span>
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
           {steps.map((step, i) => (
-            <div key={i} className="step-card bg-white p-10 rounded-3xl border border-black/10 shadow-sm relative z-10 transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl">
-              <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center text-xl font-medium mb-6 mx-auto">
+            <div key={i} className="step-card bg-white p-10 rounded-[2.5rem] border border-black/5 shadow-lg relative z-10 transition-all duration-500 hover:-translate-y-4 hover:shadow-2xl overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-indigo-500 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+              
+              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl font-bold mb-8 mx-auto shadow-inner">
                 {i + 1}
               </div>
-              <h3 className="text-2xl font-medium mb-3">{step.title}</h3>
-              <p className="text-black/60 font-light">{step.desc}</p>
+              
+              <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
+              <p className="text-black/60 font-light leading-relaxed">{step.desc}</p>
+              
+              {/* Decorative background element */}
+              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-gradient-to-br from-blue-100 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
           ))}
         </div>
@@ -748,40 +756,53 @@ function IntegrationsSection() {
   useEffect(() => {
     let ctx = gsap.context(() => {
       gsap.from(".integration-item", {
-        scale: 0.9,
+        y: 60,
+        scale: 0.95,
         opacity: 0,
         duration: 0.8,
         stagger: 0.1,
-        ease: "back.out(1.5)",
+        ease: "power3.out",
         scrollTrigger: {
           trigger: container.current,
-          start: "top 80%",
+          start: "top 75%",
+          toggleActions: "play none none reverse"
         }
       });
     }, container);
     return () => ctx.revert();
   }, []);
 
-  const tools = ["Jira", "Notion", "GitHub", "Linear", "Figma", "Google Drive"];
+  const integrationCards = [
+    { name: "Jira", color: "bg-blue-600", desc: "Create and update issues directly from Slack threads.", icon: "J" },
+    { name: "Notion", color: "bg-black", desc: "Sync meeting notes and decisions instantly.", icon: "N" },
+    { name: "GitHub", color: "bg-gray-800", desc: "Link PRs to conversations for full context.", icon: "G" },
+    { name: "Linear", color: "bg-indigo-500", desc: "Map Slack discussions to Linear cycles.", icon: "L" },
+    { name: "Figma", color: "bg-pink-500", desc: "Track design feedback without leaving chat.", icon: "F" },
+    { name: "Google Drive", color: "bg-green-500", desc: "Search through all your linked documents.", icon: "D" }
+  ];
 
   return (
     <section ref={container} className="py-32 bg-white text-black px-6 font-poppins border-t border-black/5 overflow-hidden">
       <div className="max-w-[1200px] mx-auto text-center">
-        <h2 className="text-4xl md:text-5xl font-medium tracking-tight mb-4">
+        <h2 className="text-4xl md:text-5xl font-medium tracking-tight mb-6">
           Connects with <span className="font-light">everything</span>
         </h2>
-        <p className="text-lg font-light text-black/60 mb-16 max-w-2xl mx-auto">
+        <p className="text-xl font-light text-black/60 mb-20 max-w-2xl mx-auto">
           Trelo lives in Slack, but it talks to all your favorite tools. 
-          Create issues, fetch docs, and sync context without leaving your chat.
+          Create issues, fetch docs, and sync context without ever leaving your chat.
         </p>
         
-        <div className="flex flex-wrap justify-center gap-6">
-          {tools.map((tool, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {integrationCards.map((tool, i) => (
             <div 
               key={i} 
-              className="integration-item bg-[#f8f9fa] border border-black/10 px-8 py-4 rounded-full text-xl font-medium transition-all duration-300 hover:bg-black hover:text-white cursor-pointer shadow-sm hover:-translate-y-2 hover:shadow-lg"
+              className="integration-item bg-[#f8f9fa] border border-black/5 p-8 rounded-3xl text-left transition-all duration-300 hover:bg-white hover:shadow-2xl hover:-translate-y-2 group cursor-pointer"
             >
-              {tool}
+              <div className={`w-14 h-14 ${tool.color} text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-6 shadow-md group-hover:scale-110 transition-transform`}>
+                {tool.icon}
+              </div>
+              <h3 className="text-2xl font-bold mb-2">{tool.name}</h3>
+              <p className="text-black/60 font-light">{tool.desc}</p>
             </div>
           ))}
         </div>
@@ -884,22 +905,22 @@ function ColorfulShowcaseSection() {
   }, []);
 
   return (
-    <section ref={container} className="relative py-40 overflow-hidden font-poppins text-black border-t border-black/5">
-      {/* Background Shader mixed with vibrant gradients */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-         <ShaderBackground className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply" />
+    <section ref={container} className="relative py-40 overflow-hidden font-poppins text-black border-t border-black/5 bg-white">
+      {/* Background Shader fully opaque */}
+      <div className="absolute inset-0 z-0 bg-white">
+         <ShaderBackground className="absolute inset-0 w-full h-full object-cover opacity-100 mix-blend-multiply" />
       </div>
       
       {/* Colorful glowing orbs */}
-      <div className="absolute top-10 left-10 w-64 h-64 bg-blue-300 rounded-full blur-[100px] opacity-40"></div>
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-pink-300 rounded-full blur-[120px] opacity-40"></div>
+      <div className="absolute top-10 left-10 w-64 h-64 bg-blue-200 rounded-full blur-[100px] opacity-60"></div>
+      <div className="absolute bottom-10 right-10 w-80 h-80 bg-pink-200 rounded-full blur-[120px] opacity-60"></div>
 
       <div className="relative z-10 max-w-[1200px] mx-auto px-6 text-center">
         <h2 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">
-          Work in <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500">full color.</span>
+          Your team's <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">perfect memory.</span>
         </h2>
-        <p className="text-xl text-black/60 font-light max-w-2xl mx-auto mb-20">
-          Transform dull Slack threads into vibrant, actionable insights. Bring joy back to your workflow with lightning-fast AI.
+        <p className="text-xl text-black/70 font-light max-w-2xl mx-auto mb-20">
+          Trelo never forgets. It transforms chaotic Slack threads into structured insights, tasks, and cited answers instantly.
         </p>
 
         <div className="relative h-96 w-full max-w-5xl mx-auto">
