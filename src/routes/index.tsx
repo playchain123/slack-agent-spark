@@ -484,8 +484,8 @@ function FeaturesRedesigned() {
   }, []);
 
   return (
-    <section ref={container} className="relative pt-48 pb-32 mt-16 bg-white text-black overflow-hidden font-poppins">
-      <div className="absolute inset-0 z-0">
+    <section ref={container} className="relative pt-40 pb-32 bg-white text-black overflow-hidden font-poppins">
+      <div className="absolute inset-0 z-0" style={{ maskImage: "linear-gradient(to bottom, transparent, black 25%)", WebkitMaskImage: "linear-gradient(to bottom, transparent, black 25%)" }}>
          <ShaderBackground className="absolute inset-0 w-full h-full object-cover" />
       </div>
       <div className="relative z-10 mx-auto max-w-[1400px] px-6 text-center">
@@ -884,39 +884,68 @@ function ColorfulShowcaseSection() {
   }, []);
 
   return (
-    <section ref={container} className="relative py-40 overflow-hidden font-poppins text-white border-t border-black/5">
+    <section ref={container} className="relative py-40 overflow-hidden font-poppins text-black border-t border-black/5">
       {/* Background Shader mixed with vibrant gradients */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-br from-violet-900 via-fuchsia-900 to-rose-900">
-         <ShaderBackground className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+         <ShaderBackground className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply" />
       </div>
       
       {/* Colorful glowing orbs */}
-      <div className="absolute top-10 left-10 w-64 h-64 bg-blue-500 rounded-full blur-[100px] opacity-60"></div>
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-pink-500 rounded-full blur-[120px] opacity-60"></div>
+      <div className="absolute top-10 left-10 w-64 h-64 bg-blue-300 rounded-full blur-[100px] opacity-40"></div>
+      <div className="absolute bottom-10 right-10 w-80 h-80 bg-pink-300 rounded-full blur-[120px] opacity-40"></div>
 
       <div className="relative z-10 max-w-[1200px] mx-auto px-6 text-center">
         <h2 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">
-          Work in <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-400 to-cyan-400">full color.</span>
+          Work in <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500">full color.</span>
         </h2>
-        <p className="text-xl text-white/80 font-light max-w-2xl mx-auto mb-20">
+        <p className="text-xl text-black/60 font-light max-w-2xl mx-auto mb-20">
           Transform dull Slack threads into vibrant, actionable insights. Bring joy back to your workflow with lightning-fast AI.
         </p>
 
-        <div className="relative h-80 md:h-96 w-full max-w-4xl mx-auto">
+        <div className="relative h-96 w-full max-w-5xl mx-auto">
+          {/* Extra Background Floating Widgets */}
+          <div className="color-badge absolute top-10 right-0 md:right-10 bg-white/60 backdrop-blur-md border border-black/10 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm font-medium">System Online</span>
+          </div>
+          
+          <div className="color-badge absolute bottom-20 left-0 md:left-10 bg-white/80 backdrop-blur-xl border border-black/10 p-4 rounded-2xl shadow-xl flex items-center gap-4">
+             <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+             </div>
+             <div className="text-left">
+               <div className="text-sm font-bold">14,302</div>
+               <div className="text-xs text-black/50">Events processed</div>
+             </div>
+          </div>
+
           {/* Floating cards */}
-          <div className="color-badge color-float-1 absolute top-0 left-4 md:left-20 bg-white/10 backdrop-blur-xl border border-white/30 p-6 rounded-3xl shadow-[0_0_40px_rgba(255,255,255,0.2)]">
-            <div className="text-4xl mb-2">🚀</div>
+          <div className="color-badge color-float-1 absolute top-0 left-4 md:left-32 bg-white/70 backdrop-blur-xl border border-black/10 p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.05)] text-left flex flex-col items-center">
+            <div className="w-12 h-12 mb-3 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
             <div className="font-medium text-lg">Ship faster</div>
           </div>
           
-          <div className="color-badge color-float-2 absolute bottom-0 right-4 md:right-20 bg-gradient-to-br from-pink-500/20 to-orange-500/20 backdrop-blur-xl border border-pink-500/30 p-6 rounded-3xl shadow-[0_0_40px_rgba(236,72,153,0.3)]">
-            <div className="text-4xl mb-2">✨</div>
+          <div className="color-badge color-float-2 absolute bottom-10 right-4 md:right-32 bg-white/90 backdrop-blur-xl border border-white/50 p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] text-left flex flex-col items-center">
+            <div className="w-12 h-12 mb-3 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center shadow-inner">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+            </div>
             <div className="font-medium text-lg">Zero config</div>
           </div>
 
-          <div className="color-badge color-float-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 backdrop-blur-xl border border-cyan-500/30 p-8 rounded-[2.5rem] shadow-[0_0_60px_rgba(6,182,212,0.4)]">
-            <div className="text-6xl mb-4">🧠</div>
-            <div className="text-2xl font-bold">Infinite Memory</div>
+          <div className="color-badge color-float-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-xl border border-white/60 p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.2)] text-center flex flex-col items-center">
+            <div className="w-16 h-16 mb-4 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="text-2xl md:text-3xl font-bold">Infinite Memory</div>
+            <div className="text-sm text-black/50 mt-2 font-medium">Powered by Trelo AI</div>
           </div>
         </div>
       </div>
