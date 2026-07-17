@@ -218,11 +218,6 @@ function ContinueWithSlackButton({ variant }: { variant: "nav" | "hero" }) {
   );
 }
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0 },
-};
-
 function AnimatedText({
   as: Tag = "p",
   children,
@@ -234,18 +229,10 @@ function AnimatedText({
   className?: string;
   delay?: number;
 }) {
-  const MotionTag = motion(Tag as any);
   return (
-    <MotionTag
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, amount: 0.4 }}
-      variants={fadeUp}
-      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
-      className={className}
-    >
+    <Tag className={className}>
       {children}
-    </MotionTag>
+    </Tag>
   );
 }
 
@@ -260,28 +247,17 @@ function DoodleRow() {
     { el: <DoodleFace variant="e" size={40} />, ring: "#ff7452" },
   ];
   return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      transition={{ staggerChildren: 0.08, delayChildren: 0.1 }}
-      className="flex -space-x-2"
-      aria-hidden
-    >
+    <div className="flex -space-x-2" aria-hidden>
       {icons.map((a, i) => (
-        <motion.div
+        <div
           key={i}
-          variants={{
-            hidden: { opacity: 0, scale: 0.4, y: -8 },
-            show: { opacity: 1, scale: 1, y: 0 },
-          }}
-          transition={{ duration: 0.5, ease: "backOut" }}
           className="grid h-14 w-14 place-items-center rounded-full border-[2.5px] bg-white shadow-sm"
           style={{ borderColor: a.ring }}
         >
           {a.el}
-        </motion.div>
+        </div>
       ))}
-    </motion.div>
+    </div>
   );
 }
 
@@ -297,11 +273,9 @@ function FloatingDoodle({
   rotate?: number;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.5, rotate: rotate - 20 }}
-      animate={{ opacity: 1, scale: 1, rotate }}
-      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
+    <div
       className={`pointer-events-none absolute z-0 hidden lg:block ${className}`}
+      style={{ transform: `rotate(${rotate}deg)` }}
       aria-hidden
     >
       <motion.div
@@ -310,7 +284,7 @@ function FloatingDoodle({
       >
         {children}
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -664,12 +638,12 @@ function IntegrationsSection() {
   const container = useRef<HTMLDivElement>(null);
 
   const integrationCards = [
-    { name: "Jira", color: "bg-blue-600", desc: "Create and update issues directly from Slack threads.", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M11.53 11.52A4.266 4.266 0 007.264 7.25H2.98v4.27h8.55zm-8.55 4.28a4.266 4.266 0 004.284 4.27h4.266v-4.27H2.98zm8.55-8.55a4.266 4.266 0 004.284-4.266V2.98h-4.284v4.27zm8.54 4.27A4.266 4.266 0 0015.804 7.25h-4.27v4.27h8.55z"/></svg> },
-    { name: "Notion", color: "bg-black", desc: "Sync meeting notes and decisions instantly.", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M4.12 3.167L3.08 4.249c-.274.283-.435.617-.435 1.05v12.247c0 .633.435.883 1.162.45l2.21-1.3c.754-.45 1.636-.583 2.597-.583 1.036 0 2.298.2 3.518.733l6.577 2.85c1.47.633 2.868-.45 2.868-2.033V5.416c0-.583-.242-.983-.726-1.183l-6.84-2.883c-1.134-.483-2.348-.683-3.41-.683-1.023 0-2.12.183-2.926.65L4.12 3.167zM17.5 17.5v-11L8.5 10v11l9-3.5z"/></svg> },
-    { name: "GitHub", color: "bg-gray-900", desc: "Link PRs to conversations for full context.", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg> },
-    { name: "Linear", color: "bg-indigo-600", desc: "Map Slack discussions to Linear cycles.", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M7 17l6-10m-3 10l6-10"/></svg> },
-    { name: "Figma", color: "bg-pink-500", desc: "Track design feedback without leaving chat.", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M15 2.5H9C7.067 2.5 5.5 4.067 5.5 6S7.067 9.5 9 9.5h3v-7h3c1.933 0 3.5 1.567 3.5 3.5s-1.567 3.5-3.5 3.5v-7z"/><path d="M12 9.5H9C7.067 9.5 5.5 11.067 5.5 13s1.567 3.5 3.5 3.5h3v-7z"/><path d="M12 16.5v4c0 1.933-1.567 3.5-3.5 3.5S5.5 22.433 5.5 20.5s1.567-3.5 3.5-3.5h3z"/><circle cx="15.5" cy="13" r="3.5"/></svg> },
-    { name: "Google Drive", color: "bg-green-500", desc: "Search through all your linked documents.", icon: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M8.077 3.125L0 17h7.938l7.985-13.875H8.077zm.543 14.15L4.544 24h15.918l4.077-6.725H8.62zM23.957 16.9L16.02 3.1H7.81L15.753 16.9h8.204z"/></svg> }
+    { name: "Jira", desc: "Create and update issues directly from Slack threads.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><path d="M11.53 11.52A4.266 4.266 0 007.264 7.25H2.98v4.27h8.55zm-8.55 4.28a4.266 4.266 0 004.284 4.27h4.266v-4.27H2.98zm8.55-8.55a4.266 4.266 0 004.284-4.266V2.98h-4.284v4.27zm8.54 4.27A4.266 4.266 0 0015.804 7.25h-4.27v4.27h8.55z" fill="#0052CC"/></svg> },
+    { name: "Notion", desc: "Sync meeting notes and decisions instantly.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><path d="M4.12 3.167L3.08 4.249c-.274.283-.435.617-.435 1.05v12.247c0 .633.435.883 1.162.45l2.21-1.3c.754-.45 1.636-.583 2.597-.583 1.036 0 2.298.2 3.518.733l6.577 2.85c1.47.633 2.868-.45 2.868-2.033V5.416c0-.583-.242-.983-.726-1.183l-6.84-2.883c-1.134-.483-2.348-.683-3.41-.683-1.023 0-2.12.183-2.926.65L4.12 3.167zM17.5 17.5v-11L8.5 10v11l9-3.5z" fill="#000000"/></svg> },
+    { name: "GitHub", desc: "Link PRs to conversations for full context.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" fill="#181717"/></svg> },
+    { name: "Linear", desc: "Map Slack discussions to Linear cycles.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><linearGradient id="linearGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#5E6AD2" /><stop offset="100%" stopColor="#262b57" /></linearGradient><path d="M12 24c6.627 0 12-5.373 12-12S18.627 0 12 0 0 5.373 0 12s5.373 12 12 12zM9.75 6.75l7.5 10.5h-3l-7.5-10.5h3z" fill="url(#linearGrad)"/></svg> },
+    { name: "Figma", desc: "Track design feedback without leaving chat.", icon: <svg width="24" height="24" className="w-9 h-9" viewBox="0 0 38 57" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 28.5L9.5 28.5C4.25329 28.5 0 24.2467 0 19C0 13.7533 4.25329 9.5 9.5 9.5L19 9.5L19 28.5Z" fill="#F24E1E"/><path d="M19 0L28.5 0C33.7467 0 38 4.25329 38 9.5C38 14.7467 33.7467 19 28.5 19L19 19L19 0Z" fill="#FF7262"/><path d="M19 28.5L28.5 28.5C33.7467 28.5 38 32.7467 38 38C38 43.2533 33.7467 47.5 28.5 47.5C23.2533 47.5 19 43.2533 19 38L19 28.5Z" fill="#1ABCFE"/><path d="M19 47.5L19 57C13.7533 57 9.5 52.7467 9.5 47.5C9.5 42.2533 13.7533 38 19 38L19 47.5Z" fill="#0ACF83"/><path d="M19 28.5L9.5 28.5C4.25329 28.5 0 32.7467 0 38C0 43.2533 4.25329 47.5 9.5 47.5L19 47.5L19 28.5Z" fill="#A259FF"/></svg> },
+    { name: "Google Drive", desc: "Search through all your linked documents.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><path d="M15.42 2.6H8.58L.25 17h6.84L15.42 2.6z" fill="#FFC107"/><path d="M8.58 21.4H23.7L15.42 2.6H8.58l8.28 14.4h0L8.58 21.4z" fill="#4CAF50"/><path d="M15.42 17H.25L4.4 24h15.17l-4.15-7z" fill="#2196F3"/></svg> }
   ];
 
   return (
@@ -684,16 +658,16 @@ function IntegrationsSection() {
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {integrationCards.map((tool, i) => (
+          {integrationCards.map((item, i) => (
             <div 
               key={i} 
-              className="integration-item bg-[#f8f9fa] border border-black/5 p-8 rounded-3xl text-left transition-all duration-300 hover:bg-white hover:shadow-2xl hover:-translate-y-2 group cursor-pointer"
+              className="integration-item bg-[#fcfcfd] border border-black/5 rounded-[24px] p-8 text-left hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-2 transition-all duration-300 group cursor-pointer"
             >
-              <div className={`w-14 h-14 ${tool.color} text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-6 shadow-md group-hover:scale-110 transition-transform`}>
-                {tool.icon}
+              <div className="w-14 h-14 bg-white border border-black/5 rounded-[16px] flex items-center justify-center mb-6 shadow-sm">
+                {item.icon}
               </div>
-              <h3 className="text-2xl font-bold mb-2">{tool.name}</h3>
-              <p className="text-black/60 font-light">{tool.desc}</p>
+              <h3 className="text-2xl font-bold mb-2">{item.name}</h3>
+              <p className="text-black/60 font-light">{item.desc}</p>
             </div>
           ))}
         </div>
