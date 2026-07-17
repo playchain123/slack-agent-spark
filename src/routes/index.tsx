@@ -534,12 +534,12 @@ function ShowcaseSection() {
   return (
     <section ref={container} className="py-32 bg-white text-black px-6 font-poppins border-t border-black/5">
       <div className="max-w-[1200px] mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 md:mb-16">
           <h2 className="text-4xl md:text-5xl font-medium tracking-tight mb-4">
             Everything you need. <span className="font-light">Nothing you don't.</span>
           </h2>
         </div>
-        <div className="showcase-box bg-gray-100 rounded-[2rem] p-8 md:p-16 border border-black/10 aspect-video flex flex-col items-center justify-center text-center overflow-hidden relative">
+        <div className="showcase-box bg-gray-100 rounded-[2rem] px-5 py-16 md:p-16 border border-black/10 lg:aspect-video flex flex-col items-center justify-center text-center overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-50"></div>
           
           {/* Floating UI Elements */}
@@ -638,12 +638,12 @@ function IntegrationsSection() {
   const container = useRef<HTMLDivElement>(null);
 
   const integrationCards = [
-    { name: "Jira", desc: "Create and update issues directly from Slack threads.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><path d="M11.53 11.52A4.266 4.266 0 007.264 7.25H2.98v4.27h8.55zm-8.55 4.28a4.266 4.266 0 004.284 4.27h4.266v-4.27H2.98zm8.55-8.55a4.266 4.266 0 004.284-4.266V2.98h-4.284v4.27zm8.54 4.27A4.266 4.266 0 0015.804 7.25h-4.27v4.27h8.55z" fill="#0052CC"/></svg> },
-    { name: "Notion", desc: "Sync meeting notes and decisions instantly.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><path d="M4.12 3.167L3.08 4.249c-.274.283-.435.617-.435 1.05v12.247c0 .633.435.883 1.162.45l2.21-1.3c.754-.45 1.636-.583 2.597-.583 1.036 0 2.298.2 3.518.733l6.577 2.85c1.47.633 2.868-.45 2.868-2.033V5.416c0-.583-.242-.983-.726-1.183l-6.84-2.883c-1.134-.483-2.348-.683-3.41-.683-1.023 0-2.12.183-2.926.65L4.12 3.167zM17.5 17.5v-11L8.5 10v11l9-3.5z" fill="#000000"/></svg> },
-    { name: "GitHub", desc: "Link PRs to conversations for full context.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" fill="#181717"/></svg> },
-    { name: "Linear", desc: "Map Slack discussions to Linear cycles.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><linearGradient id="linearGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#5E6AD2" /><stop offset="100%" stopColor="#262b57" /></linearGradient><path d="M12 24c6.627 0 12-5.373 12-12S18.627 0 12 0 0 5.373 0 12s5.373 12 12 12zM9.75 6.75l7.5 10.5h-3l-7.5-10.5h3z" fill="url(#linearGrad)"/></svg> },
-    { name: "Figma", desc: "Track design feedback without leaving chat.", icon: <svg width="24" height="24" className="w-9 h-9" viewBox="0 0 38 57" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 28.5L9.5 28.5C4.25329 28.5 0 24.2467 0 19C0 13.7533 4.25329 9.5 9.5 9.5L19 9.5L19 28.5Z" fill="#F24E1E"/><path d="M19 0L28.5 0C33.7467 0 38 4.25329 38 9.5C38 14.7467 33.7467 19 28.5 19L19 19L19 0Z" fill="#FF7262"/><path d="M19 28.5L28.5 28.5C33.7467 28.5 38 32.7467 38 38C38 43.2533 33.7467 47.5 28.5 47.5C23.2533 47.5 19 43.2533 19 38L19 28.5Z" fill="#1ABCFE"/><path d="M19 47.5L19 57C13.7533 57 9.5 52.7467 9.5 47.5C9.5 42.2533 13.7533 38 19 38L19 47.5Z" fill="#0ACF83"/><path d="M19 28.5L9.5 28.5C4.25329 28.5 0 32.7467 0 38C0 43.2533 4.25329 47.5 9.5 47.5L19 47.5L19 28.5Z" fill="#A259FF"/></svg> },
-    { name: "Google Drive", desc: "Search through all your linked documents.", icon: <svg viewBox="0 0 24 24" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><path d="M15.42 2.6H8.58L.25 17h6.84L15.42 2.6z" fill="#FFC107"/><path d="M8.58 21.4H23.7L15.42 2.6H8.58l8.28 14.4h0L8.58 21.4z" fill="#4CAF50"/><path d="M15.42 17H.25L4.4 24h15.17l-4.15-7z" fill="#2196F3"/></svg> }
+    { name: "Jira", desc: "Create and update issues directly from Slack threads.", icon: <img src="/jira.png" alt="Jira logo" className="w-10 h-10 object-contain" /> },
+    { name: "Notion", desc: "Sync meeting notes and decisions instantly.", icon: <img src="/notion.png" alt="Notion logo" className="w-10 h-10 object-contain" /> },
+    { name: "GitHub", desc: "Link PRs to conversations for full context.", icon: <svg viewBox="0 0 24 24" className="w-10 h-10" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" fill="#181717"/></svg> },
+    { name: "Linear", desc: "Map Slack discussions to Linear cycles.", icon: <img src="/linear.png" alt="Linear logo" className="w-10 h-10 object-contain" /> },
+    { name: "Figma", desc: "Track design feedback without leaving chat.", icon: <img src="/figma.png" alt="Figma logo" className="w-10 h-10 object-contain" /> },
+    { name: "Google Drive", desc: "Search through all your linked documents.", icon: <img src="/google driver.webp" alt="Google Drive logo" className="w-10 h-10 object-contain" /> }
   ];
 
   return (
@@ -732,14 +732,14 @@ function ColorfulShowcaseSection() {
           Trelo never forgets. It transforms chaotic Slack threads into structured insights, tasks, and cited answers instantly.
         </p>
 
-        <div className="relative h-96 w-full max-w-5xl mx-auto">
+        <div className="relative min-h-[500px] md:min-h-[600px] w-full max-w-5xl mx-auto mt-12 md:mt-0">
           {/* Extra Background Floating Widgets */}
-          <div className="color-badge absolute top-10 right-0 md:right-10 bg-white/60 backdrop-blur-md border border-black/10 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+          <div className="color-badge hidden md:flex absolute top-10 right-0 md:right-10 bg-white/60 backdrop-blur-md border border-black/10 px-4 py-2 rounded-full shadow-lg items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span className="text-sm font-medium">System Online</span>
           </div>
           
-          <div className="color-badge absolute bottom-20 left-0 md:left-10 bg-white/80 backdrop-blur-xl border border-black/10 p-4 rounded-2xl shadow-xl flex items-center gap-4">
+          <div className="color-badge hidden md:flex absolute bottom-20 left-0 md:left-10 bg-white/80 backdrop-blur-xl border border-black/10 p-4 rounded-2xl shadow-xl items-center gap-4">
              <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
              </div>
@@ -750,27 +750,27 @@ function ColorfulShowcaseSection() {
           </div>
 
           {/* Floating cards */}
-          <div className="color-badge color-float-1 absolute top-0 left-4 md:left-32 bg-white/70 backdrop-blur-xl border border-black/10 p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.05)] text-left flex flex-col items-center">
-            <div className="w-12 h-12 mb-3 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="color-badge color-float-1 absolute top-4 md:top-0 left-2 md:left-32 bg-white/70 backdrop-blur-xl border border-black/10 p-4 md:p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.05)] text-left flex flex-col items-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 mb-2 md:mb-3 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center shadow-inner">
+              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <div className="font-medium text-lg">Ship faster</div>
+            <div className="font-medium text-base md:text-lg">Ship faster</div>
           </div>
           
-          <div className="color-badge color-float-2 absolute bottom-10 right-4 md:right-32 bg-white/90 backdrop-blur-xl border border-white/50 p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] text-left flex flex-col items-center">
-            <div className="w-12 h-12 mb-3 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center shadow-inner">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="color-badge color-float-2 absolute bottom-4 md:bottom-10 right-2 md:right-32 bg-white/90 backdrop-blur-xl border border-white/50 p-4 md:p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] text-left flex flex-col items-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 mb-2 md:mb-3 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center shadow-inner">
+              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             </div>
-            <div className="font-medium text-lg">Zero config</div>
+            <div className="font-medium text-base md:text-lg">Zero config</div>
           </div>
 
-          <div className="color-badge color-float-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-xl border border-white/60 p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.2)] text-center flex flex-col items-center">
-            <div className="w-16 h-16 mb-4 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="color-badge color-float-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] sm:w-auto bg-white/95 backdrop-blur-xl border border-white/60 p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.2)] text-center flex flex-col items-center">
+            <div className="w-14 h-14 md:w-16 md:h-16 mb-4 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
+              <svg className="w-7 h-7 md:w-8 md:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
